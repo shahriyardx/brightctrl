@@ -2,10 +2,10 @@ import threading
 
 import dearpygui.dearpygui as dpg
 
-from brightctrl.callbacks import _detect_thread
-from brightctrl.state import AppState
-from brightctrl.theme import apply_global_theme, load_font, register_item_themes
-from brightctrl.ui import build_ui, build_window
+from .callbacks import _detect_thread
+from .state import AppState
+from .theme import apply_global_theme, load_font, register_item_themes
+from .ui import build_ui, build_window
 
 
 def main() -> None:

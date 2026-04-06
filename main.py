@@ -1,22 +1,3 @@
-"""
-BrightCtrl - Monitor brightness controller for Linux via DDC/CI.
-
-Requirements
-------------
-System:
-    ddcutil         (sudo pacman -S ddcutil  /  sudo apt install ddcutil  /  sudo dnf install ddcutil)
-    i2c-dev module  (sudo modprobe i2c-dev)
-    i2c group       (sudo usermod -aG i2c $USER  — then log out/in)
-    Persist module: echo 'i2c-dev' | sudo tee /etc/modules-load.d/i2c.conf
-
-Python:
-    pip install dearpygui   OR   uv add dearpygui
-
-Usage
------
-    python -m main.py
-"""
-
 import threading
 
 import dearpygui.dearpygui as dpg
@@ -55,7 +36,7 @@ def main() -> None:
     while dpg.is_dearpygui_running():
         if state._detect_ready:
             state._detect_ready = False
-            monitors, err = state._detect_result
+            monitors, err = state._detect_result  # type: ignore
             dpg.delete_item("monitors_panel", children_only=True)
             build_ui(monitors, err, state)
 

@@ -1,9 +1,12 @@
 [project]
-name = "linux-brightness-control"
-version = "0.1.0"
-description = "Add your description here"
+name = "brightctrl"
+version = "0.0.1"
+description = "A lightweight DDC/CI monitor brightness controller for Linux"
 readme = "README.md"
-requires-python = ">=3.13"
+authors = [
+    { name = "MD Shahriyar Alam", email = "contact@shahriyar.dev" },
+]
+requires-python = ">=3.10"
 dependencies = [
     "dearpygui>=2.2",
 ]

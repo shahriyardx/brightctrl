@@ -1,7 +1,3 @@
-"""
-ddc.py - Low-level ddcutil wrappers for BrightCtrl.
-"""
-
 import re
 import subprocess
 

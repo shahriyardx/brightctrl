@@ -1,7 +1,3 @@
-"""
-theme.py - Color palette and Dear PyGui theme setup for BrightCtrl.
-"""
-
 import os
 
 import dearpygui.dearpygui as dpg

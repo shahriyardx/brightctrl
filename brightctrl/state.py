@@ -1,7 +1,3 @@
-"""
-state.py - Application state for BrightCtrl.
-"""
-
 import threading
 
 from .ddc import set_brightness

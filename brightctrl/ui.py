@@ -1,7 +1,3 @@
-"""
-ui.py - Dear PyGui window and widget construction for BrightCtrl.
-"""
-
 import threading
 
 import dearpygui.dearpygui as dpg

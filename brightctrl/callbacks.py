@@ -1,7 +1,3 @@
-"""
-callbacks.py - Dear PyGui event callbacks for BrightCtrl.
-"""
-
 import threading
 
 import dearpygui.dearpygui as dpg

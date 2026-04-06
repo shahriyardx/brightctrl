@@ -63,19 +63,6 @@ pip install dearpygui
 python -m brightctrl
 ```
 
-## Project Structure
-
-```
-brightctrl/
-├── __main__.py   # Entry point & render loop
-├── __init__.py   # Package metadata
-├── ddc.py        # ddcutil subprocess wrappers
-├── state.py      # AppState (sliders, pending timers, flags)
-├── callbacks.py  # Dear PyGui event callbacks
-├── theme.py      # Colour palette & theme setup
-└── ui.py         # Window & widget builders
-```
-
 ## Known Limitations
 
 - **NVIDIA GPUs** — proprietary drivers often block the i2c bus; DDC/CI may not work.

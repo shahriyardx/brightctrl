@@ -34,39 +34,8 @@ function powerShell(script: string, timeout = 8000): Promise<string> {
   ).then((r) => r.stdout.trim())
 }
 
-// ── macOS: Python + CoreGraphics ─────────────────────────────────────
-
-const macPyScript = `import sys,json
-from Quartz.CoreGraphics import *
-c=sys.argv[1]
-if c=='list':
- b=(CGDirectDisplayID*32)()
- n=CGDisplayCount()
- CGGetActiveDisplayList(32,b,n)
- d=[]
- for i in range(n.value):
-  bi=CGDisplayGetBrightness(b[i])
-  d.append({'index':i+1,'name':f'Display {b[i]}'})
- print(json.dumps(d))
-elif c=='get':
- b=(CGDirectDisplayID*32)()
- n=CGDisplayCount()
- CGGetActiveDisplayList(32,b,n)
- print(round(CGDisplayGetBrightness(b[int(sys.argv[2])-1])*100))
-elif c=='set':
- b=(CGDirectDisplayID*32)()
- n=CGDisplayCount()
- CGGetActiveDisplayList(32,b,n)
- CGDisplaySetBrightness(b[int(sys.argv[2])-1],int(sys.argv[3])/100.0)`
-
-async function macPy(cmd: string): Promise<string> {
-  const args = ["-c", macPyScript, ...cmd.split(" ")]
-  const r = await execFileAsync("python3", args, {
-    timeout: 5000,
-    encoding: "utf-8",
-  })
-  return r.stdout.trim()
-}
+// ── macOS: not yet supported ───────────────────────────────────────
+//
 
 // ── Backend check ───────────────────────────────────────────────────
 
@@ -82,14 +51,7 @@ export async function checkDdcutil(): Promise<boolean> {
       return false
     }
   }
-  if (isMac) {
-    try {
-      await macPy("list")
-      return true
-    } catch {
-      return false
-    }
-  }
+  if (isMac) return false
   try {
     await execFileAsync("which", ["ddcutil"])
     return true
@@ -145,37 +107,18 @@ async function detectMonitorsWindows(): Promise<MonitorInfo[]> {
 // ── macOS: Python + CoreGraphics ──────────────────────────────────
 
 async function detectMonitorsMac(): Promise<MonitorInfo[]> {
-  const stdout = await macPy("list")
-  if (!stdout) return []
-  const data = JSON.parse(stdout)
-  const arr = Array.isArray(data) ? data : [data]
-  return arr.map((d: Record<string, unknown>, i: number) => ({
-    index: i + 1,
-    name: typeof d.name === "string" && d.name ? d.name : "Display",
-    bus: "",
-  }))
+  return []
 }
 
-async function getBrightnessMac(displayIndex: number): Promise<number | null> {
-  try {
-    const stdout = await macPy(`get ${displayIndex}`)
-    const v = Number.parseInt(stdout, 10)
-    return Number.isNaN(v) ? null : v
-  } catch {
-    return null
-  }
+async function getBrightnessMac(_displayIndex: number): Promise<number | null> {
+  return null
 }
 
 async function setBrightnessMac(
-  displayIndex: number,
-  value: number,
+  _displayIndex: number,
+  _value: number,
 ): Promise<boolean> {
-  try {
-    await macPy(`set ${displayIndex} ${Math.round(value)}`)
-    return true
-  } catch {
-    return false
-  }
+  return false
 }
 
 export async function detectMonitors(): Promise<MonitorInfo[]> {

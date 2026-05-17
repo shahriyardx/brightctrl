@@ -1,6 +1,6 @@
 {
   "name": "brightctrl",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Terminal UI for DDC/CI monitor brightness control",
   "type": "module",
   "bin": {

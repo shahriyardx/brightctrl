@@ -1,22 +1,39 @@
 {
-  "name": "brightctrl-tui",
-  "version": "0.1.0",
+  "name": "brightctrl",
+  "version": "0.1.1",
+  "description": "Terminal UI for DDC/CI monitor brightness control",
   "type": "module",
   "bin": {
-    "brightctrl": "src/index.tsx"
+    "brightctrl": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "bun build src/index.tsx --outdir dist --target node --format esm --external ink --external react --external react-reconciler --external scheduler --external '@types/react' && sed -i 's_^#!/usr/bin/env bun_#!/usr/bin/env node_' dist/index.js",
+    "prepublishOnly": "bun run build",
+    "lint": "biome check src/",
+    "format": "biome check --write src/",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "ink": "^5.2.0",
     "react": "^18.3.0"
   },
-  "scripts": {
-    "lint": "biome check src/",
-    "format": "biome check --write src/",
-    "typecheck": "tsc --noEmit"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@types/react": "^18.3.0",
     "typescript": "^5.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shahriyardx/brightctrl.git"
+  },
+  "homepage": "https://github.com/shahriyardx/brightctrl",
+  "keywords": ["brightness", "ddc-ci", "ddcutil", "monitor", "tui", "ink", "waybar"],
+  "license": "MIT"
 }

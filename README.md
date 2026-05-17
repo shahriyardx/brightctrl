@@ -44,27 +44,31 @@ ddcutil detect
 
 ### Runtime
 
-- [Bun](https://bun.sh) 1.x
+- [Node.js](https://nodejs.org) >= 18
+- Or [Bun](https://bun.sh) 1.x (for development)
 
-## Install
+## Install & Run
+
+### Quick — no install needed
+
+```bash
+npx brightctrl
+```
+
+### Global install
+
+```bash
+npm install -g brightctrl
+brightctrl
+```
+
+### From source
 
 ```bash
 git clone https://github.com/shahriyardx/brightctrl.git
 cd brightctrl
 bun install
-```
-
-## Usage
-
-```bash
 bun src/index.tsx
-```
-
-Or install globally via the `bin` entry:
-
-```bash
-bun link
-brightctrl
 ```
 
 ### Controls

@@ -1,0 +1,22 @@
+{
+  "name": "brightctrl-tui",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "brightctrl": "src/index.tsx"
+  },
+  "dependencies": {
+    "ink": "^5.2.0",
+    "react": "^18.3.0"
+  },
+  "scripts": {
+    "lint": "biome check src/",
+    "format": "biome check --write src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.0.0"
+  }
+}

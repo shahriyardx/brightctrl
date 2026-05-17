@@ -2,6 +2,8 @@ import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
 const execFileAsync = promisify(execFile)
+const isWindows = process.platform === "win32"
+const isMac = process.platform === "darwin"
 
 export interface MonitorInfo {
   index: number
@@ -13,6 +15,8 @@ export interface Monitor extends MonitorInfo {
   brightness: number
 }
 
+// ── Linux: ddcutil ──────────────────────────────────────────────────
+
 function ddcutil(args: string[], timeout = 8000): Promise<string> {
   return execFileAsync("ddcutil", args, {
     timeout,
@@ -20,7 +24,47 @@ function ddcutil(args: string[], timeout = 8000): Promise<string> {
   }).then((r) => r.stdout)
 }
 
+// ── Windows: PowerShell + WMI ───────────────────────────────────────
+
+function powerShell(script: string, timeout = 8000): Promise<string> {
+  return execFileAsync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-Command", script],
+    { timeout, encoding: "utf-8" },
+  ).then((r) => r.stdout.trim())
+}
+
+// ── macOS: brightness CLI ───────────────────────────────────────────
+
+function brightnessCLI(args: string[], timeout = 5000): Promise<string> {
+  return execFileAsync("brightness", args, {
+    timeout,
+    encoding: "utf-8",
+  }).then((r) => r.stdout.trim())
+}
+
+// ── Backend check ───────────────────────────────────────────────────
+
 export async function checkDdcutil(): Promise<boolean> {
+  if (isWindows) {
+    try {
+      const out = await powerShell(
+        "Get-CimInstance -Namespace root/WMI -ClassName WmiMonitorBrightness | ConvertTo-Json -Depth 3",
+        5000,
+      )
+      return out.length > 0 && out !== "null"
+    } catch {
+      return false
+    }
+  }
+  if (isMac) {
+    try {
+      await execFileAsync("which", ["brightness"])
+      return true
+    } catch {
+      return false
+    }
+  }
   try {
     await execFileAsync("which", ["ddcutil"])
     return true
@@ -29,7 +73,9 @@ export async function checkDdcutil(): Promise<boolean> {
   }
 }
 
-export async function detectMonitors(): Promise<MonitorInfo[]> {
+// ── Monitor detection ───────────────────────────────────────────────
+
+async function detectMonitorsLinux(): Promise<MonitorInfo[]> {
   const stdout = await ddcutil(["detect", "--brief"], 15000)
   const monitors: MonitorInfo[] = []
   let current: Partial<MonitorInfo> | null = null
@@ -39,8 +85,9 @@ export async function detectMonitors(): Promise<MonitorInfo[]> {
     if (t.startsWith("Display ")) {
       if (current?.index != null) monitors.push(current as MonitorInfo)
       const m = t.match(/Display\s+(\d+)/)
+      const idxStr = m?.[1]
       current = {
-        index: m ? Number.parseInt(m[1]!, 10) : monitors.length + 1,
+        index: idxStr ? Number.parseInt(idxStr, 10) : monitors.length + 1,
         name: "Unknown Monitor",
         bus: "",
       }
@@ -57,7 +104,94 @@ export async function detectMonitors(): Promise<MonitorInfo[]> {
   return monitors
 }
 
-export async function getBrightness(
+async function detectMonitorsWindows(): Promise<MonitorInfo[]> {
+  const ps = `$b=Get-CimInstance -Namespace root/WMI -ClassName WmiMonitorBrightness; $r=@(); $i=0; foreach($m in $b){$i++; $r+=[PSCustomObject]@{index=$i;name=[string]($m.InstanceName -replace '.*\\\\([^\\\\]+)\\\\.*','$1');bus=$m.InstanceName}}; $r | ConvertTo-Json -Depth 3`
+  const stdout = await powerShell(ps, 10000)
+  if (!stdout || stdout === "null") return []
+  const data = JSON.parse(stdout)
+  const arr = Array.isArray(data) ? data : [data]
+  return arr.map((d: Record<string, unknown>, i: number) => ({
+    index: i + 1,
+    name: typeof d.name === "string" && d.name ? d.name : "Monitor",
+    bus: typeof d.bus === "string" ? d.bus : "",
+  }))
+}
+
+// ── macOS: brightness CLI ──────────────────────────────────────────
+
+async function detectMonitorsMac(): Promise<MonitorInfo[]> {
+  const stdout = await brightnessCLI(["-l"])
+  if (!stdout) return []
+
+  const lines = stdout.split("\n")
+  const monitors: MonitorInfo[] = []
+
+  for (const line of lines) {
+    const m = line.match(/^display\s+(\d+):/)
+    if (m) {
+      const cliIdx = Number.parseInt(m[1] as string, 10)
+      const isMain = line.includes("main;")
+      monitors.push({
+        index: cliIdx + 1,
+        name: isMain ? "Built-in Display" : "Display",
+        bus: `display ${cliIdx}`,
+      })
+    }
+  }
+
+  // Single display — raw brightness number, no display prefix
+  if (monitors.length === 0 && stdout.length > 0) {
+    monitors.push({ index: 1, name: "Built-in Display", bus: "display 0" })
+  }
+
+  return monitors
+}
+
+async function getBrightnessMac(displayIndex: number): Promise<number | null> {
+  try {
+    const cliIdx = displayIndex - 1
+    const stdout = await brightnessCLI(["-l"])
+    if (!stdout) return null
+
+    const targetLine = stdout
+      .split("\n")
+      .find((l) => l.startsWith(`display ${cliIdx}:`))
+    if (targetLine) {
+      const m = targetLine.match(/brightness\s+([\d.]+)/)
+      if (m) return Math.round(Number.parseFloat(m[1] as string) * 100)
+    }
+
+    // Single display — output is just a float
+    const v = Number.parseFloat(stdout)
+    return Number.isNaN(v) ? null : Math.round(v * 100)
+  } catch {
+    return null
+  }
+}
+
+async function setBrightnessMac(
+  displayIndex: number,
+  value: number,
+): Promise<boolean> {
+  try {
+    const cliIdx = displayIndex - 1
+    const level = Math.round(value) / 100
+    await brightnessCLI(["-d", String(cliIdx), String(level)])
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function detectMonitors(): Promise<MonitorInfo[]> {
+  if (isWindows) return detectMonitorsWindows()
+  if (isMac) return detectMonitorsMac()
+  return detectMonitorsLinux()
+}
+
+// ── Get brightness ──────────────────────────────────────────────────
+
+async function getBrightnessLinux(
   displayIndex: number,
 ): Promise<number | null> {
   try {
@@ -66,13 +200,38 @@ export async function getBrightness(
       5000,
     )
     const m = stdout.match(/current value\s*=\s*(\d+)/)
-    return m ? Number.parseInt(m[1]!, 10) : null
+    const val = m?.[1]
+    return val ? Number.parseInt(val, 10) : null
   } catch {
     return null
   }
 }
 
-export async function setBrightness(
+async function getBrightnessWindows(
+  displayIndex: number,
+): Promise<number | null> {
+  try {
+    const idx = Math.max(0, displayIndex - 1)
+    const ps = `$b=Get-CimInstance -Namespace root/WMI -ClassName WmiMonitorBrightness; if($b -and $b.Count -ge ${idx + 1}){$b[${idx}].CurrentBrightness}else{-1}`
+    const stdout = await powerShell(ps, 5000)
+    const v = Number.parseInt(stdout, 10)
+    return Number.isNaN(v) || v < 0 ? null : v
+  } catch {
+    return null
+  }
+}
+
+export async function getBrightness(
+  displayIndex: number,
+): Promise<number | null> {
+  if (isWindows) return getBrightnessWindows(displayIndex)
+  if (isMac) return getBrightnessMac(displayIndex)
+  return getBrightnessLinux(displayIndex)
+}
+
+// ── Set brightness ──────────────────────────────────────────────────
+
+async function setBrightnessLinux(
   displayIndex: number,
   value: number,
 ): Promise<boolean> {
@@ -85,4 +244,27 @@ export async function setBrightness(
   } catch {
     return false
   }
+}
+
+async function setBrightnessWindows(
+  displayIndex: number,
+  value: number,
+): Promise<boolean> {
+  try {
+    const idx = Math.max(0, displayIndex - 1)
+    const ps = `$m=Get-CimInstance -Namespace root/WMI -ClassName WmiMonitorBrightnessMethods; if($m -and $m.Count -ge ${idx + 1}){$m[${idx}].WmiSetBrightness(1,${Math.round(value)})}`
+    await powerShell(ps, 5000)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function setBrightness(
+  displayIndex: number,
+  value: number,
+): Promise<boolean> {
+  if (isWindows) return setBrightnessWindows(displayIndex, value)
+  if (isMac) return setBrightnessMac(displayIndex, value)
+  return setBrightnessLinux(displayIndex, value)
 }

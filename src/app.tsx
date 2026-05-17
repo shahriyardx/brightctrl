@@ -115,10 +115,16 @@ export default function App() {
     setError(null)
     setStatus("Checking ddcutil...")
 
-    const hasDdcutil = await checkDdcutil()
-    if (!hasDdcutil) {
-      setError("ddcutil not found. Install: sudo pacman -S ddcutil")
-      setStatus("ddcutil missing")
+    const hasBackend = await checkDdcutil()
+    if (!hasBackend) {
+      if (process.platform === "win32") {
+        setError("No monitors with WMI brightness control found")
+      } else if (process.platform === "darwin") {
+        setError("brightness CLI not found. Install: brew install brightness")
+      } else {
+        setError("ddcutil not found. Install: sudo pacman -S ddcutil")
+      }
+      setStatus("backend unavailable")
       setLoading(false)
       return
     }

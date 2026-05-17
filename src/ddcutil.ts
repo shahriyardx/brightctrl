@@ -34,16 +34,38 @@ function powerShell(script: string, timeout = 8000): Promise<string> {
   ).then((r) => r.stdout.trim())
 }
 
-// ── macOS: brightness CLI ───────────────────────────────────────────
+// ── macOS: Python + CoreGraphics ─────────────────────────────────────
 
-function brightnessCLI(
-  args: string[],
-  timeout = 5000,
-): Promise<{ stdout: string; stderr: string }> {
-  return execFileAsync("brightness", args, {
-    timeout,
+const macPyScript = `import sys,json
+from Quartz.CoreGraphics import *
+c=sys.argv[1]
+if c=='list':
+ b=(CGDirectDisplayID*32)()
+ n=CGDisplayCount()
+ CGGetActiveDisplayList(32,b,n)
+ d=[]
+ for i in range(n.value):
+  bi=CGDisplayGetBrightness(b[i])
+  d.append({'index':i+1,'name':f'Display {b[i]}'})
+ print(json.dumps(d))
+elif c=='get':
+ b=(CGDirectDisplayID*32)()
+ n=CGDisplayCount()
+ CGGetActiveDisplayList(32,b,n)
+ print(round(CGDisplayGetBrightness(b[int(sys.argv[2])-1])*100))
+elif c=='set':
+ b=(CGDirectDisplayID*32)()
+ n=CGDisplayCount()
+ CGGetActiveDisplayList(32,b,n)
+ CGDisplaySetBrightness(b[int(sys.argv[2])-1],int(sys.argv[3])/100.0)`
+
+async function macPy(cmd: string): Promise<string> {
+  const args = ["-c", macPyScript, ...cmd.split(" ")]
+  const r = await execFileAsync("python3", args, {
+    timeout: 5000,
     encoding: "utf-8",
-  }).then((r) => ({ stdout: r.stdout.trim(), stderr: r.stderr.trim() }))
+  })
+  return r.stdout.trim()
 }
 
 // ── Backend check ───────────────────────────────────────────────────
@@ -62,7 +84,7 @@ export async function checkDdcutil(): Promise<boolean> {
   }
   if (isMac) {
     try {
-      await execFileAsync("which", ["brightness"])
+      await macPy("list")
       return true
     } catch {
       return false
@@ -120,53 +142,25 @@ async function detectMonitorsWindows(): Promise<MonitorInfo[]> {
   }))
 }
 
-// ── macOS: brightness CLI ──────────────────────────────────────────
+// ── macOS: Python + CoreGraphics ──────────────────────────────────
 
 async function detectMonitorsMac(): Promise<MonitorInfo[]> {
-  const { stdout } = await brightnessCLI(["-l"])
+  const stdout = await macPy("list")
   if (!stdout) return []
-
-  const lines = stdout.split("\n")
-  const monitors: MonitorInfo[] = []
-
-  for (const line of lines) {
-    const m = line.match(/^display\s+(\d+):/)
-    if (m) {
-      const cliIdx = Number.parseInt(m[1] as string, 10)
-      const isMain = line.includes("main;")
-      monitors.push({
-        index: cliIdx + 1,
-        name: isMain ? "Built-in Display" : "Display",
-        bus: `display ${cliIdx}`,
-      })
-    }
-  }
-
-  // Single display — raw brightness number, no display prefix
-  if (monitors.length === 0 && stdout.length > 0) {
-    monitors.push({ index: 1, name: "Built-in Display", bus: "display 0" })
-  }
-
-  return monitors
+  const data = JSON.parse(stdout)
+  const arr = Array.isArray(data) ? data : [data]
+  return arr.map((d: Record<string, unknown>, i: number) => ({
+    index: i + 1,
+    name: typeof d.name === "string" && d.name ? d.name : "Display",
+    bus: "",
+  }))
 }
 
 async function getBrightnessMac(displayIndex: number): Promise<number | null> {
   try {
-    const cliIdx = displayIndex - 1
-    const { stdout } = await brightnessCLI(["-l"])
-    if (!stdout) return null
-
-    const targetLine = stdout
-      .split("\n")
-      .find((l) => l.startsWith(`display ${cliIdx}:`))
-    if (targetLine) {
-      const m = targetLine.match(/brightness\s+([\d.]+)/)
-      if (m) return Math.round(Number.parseFloat(m[1] as string) * 100)
-    }
-
-    // Single display — output is just a float
-    const v = Number.parseFloat(stdout)
-    return Number.isNaN(v) ? null : Math.round(v * 100)
+    const stdout = await macPy(`get ${displayIndex}`)
+    const v = Number.parseInt(stdout, 10)
+    return Number.isNaN(v) ? null : v
   } catch {
     return null
   }
@@ -176,21 +170,11 @@ async function setBrightnessMac(
   displayIndex: number,
   value: number,
 ): Promise<boolean> {
-  const level = Math.round(value) / 100
-
-  // Try per-display first, fall back to global set
   try {
-    const cliIdx = displayIndex - 1
-    await brightnessCLI(["-d", String(cliIdx), String(level)])
+    await macPy(`set ${displayIndex} ${Math.round(value)}`)
     return true
   } catch {
-    // Per-display failed — try global (sets all displays)
-    try {
-      await brightnessCLI([String(level)])
-      return true
-    } catch {
-      return false
-    }
+    return false
   }
 }
 

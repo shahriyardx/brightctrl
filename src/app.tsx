@@ -120,7 +120,9 @@ export default function App() {
       if (process.platform === "win32") {
         setError("No monitors with WMI brightness control found")
       } else if (process.platform === "darwin") {
-        setError("brightness CLI not found. Install: brew install brightness")
+        setError(
+          "Python Quarts.CoreGraphics unavailable. Try: pip3 install pyobjc-framework-Quartz",
+        )
       } else {
         setError("ddcutil not found. Install: sudo pacman -S ddcutil")
       }

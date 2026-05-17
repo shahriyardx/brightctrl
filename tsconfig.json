@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node"],
     "lib": ["ESNext"],
     "target": "ES2022",
     "module": "Preserve",

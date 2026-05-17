@@ -8,8 +8,6 @@ import {
   setBrightness,
 } from "./ddcutil.js"
 
-// ─── Brightness Bar ──────────────────────────────────────────────────
-
 function BrightnessBar({
   value,
   width = 25,
@@ -32,8 +30,6 @@ function BrightnessBar({
     </Box>
   )
 }
-
-// ─── Monitor Card ────────────────────────────────────────────────────
 
 function MonitorCard({
   monitor,
@@ -65,40 +61,23 @@ function MonitorCard({
   )
 }
 
-// ─── Error Panel ─────────────────────────────────────────────────────
-
 function ErrorPanel() {
   const plat = process.platform
-  if (plat === "darwin") return null
+  if (plat === "darwin" || plat === "win32") return null
 
   return (
     <Box flexDirection="column" marginTop={1}>
       <Text color="yellow">Troubleshooting:</Text>
-      {plat === "win32" ? (
-        <>
-          <Text color="gray">
-            Some GPUs/monitors don't expose brightness via WMI.
-          </Text>
-          <Text color="gray">
-            Try installing MonitorController from Windows Store.
-          </Text>
-        </>
-      ) : (
-        <>
-          <Text color="gray"> sudo pacman -S ddcutil</Text>
-          <Text color="gray"> sudo usermod -aG i2c $USER</Text>
-          <Text color="gray"> sudo modprobe i2c-dev</Text>
-          <Text color="gray">
-            echo 'i2c-dev' | sudo tee /etc/modules-load.d/i2c.conf
-          </Text>
-          <Text color="gray"> (log out and in for group change)</Text>
-        </>
-      )}
+      <Text color="gray"> sudo pacman -S ddcutil</Text>
+      <Text color="gray"> sudo usermod -aG i2c $USER</Text>
+      <Text color="gray"> sudo modprobe i2c-dev</Text>
+      <Text color="gray">
+        echo 'i2c-dev' | sudo tee /etc/modules-load.d/i2c.conf
+      </Text>
+      <Text color="gray"> (log out and in for group change)</Text>
     </Box>
   )
 }
-
-// ─── Main App ────────────────────────────────────────────────────────
 
 export default function App() {
   const { exit } = useApp()
@@ -110,7 +89,6 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [typing, setTyping] = useState(false)
   const [typed, setTyped] = useState("")
-  // Debounce: wait 500ms after last keypress then fire ddcutil
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
   const pendingRef = useRef<Map<number, number>>(new Map())
 
@@ -134,7 +112,7 @@ export default function App() {
     const hasBackend = await checkDdcutil()
     if (!hasBackend) {
       if (process.platform === "win32") {
-        setError("No monitors with WMI brightness control found")
+        setError("Windows is not supported at this moment")
       } else if (process.platform === "darwin") {
         setError("macOS is not supported at this moment")
       } else {
@@ -234,7 +212,6 @@ export default function App() {
 
   return (
     <Box flexDirection="column" padding={1}>
-      {/* Header */}
       <Box gap={2}>
         <Text bold color="cyan">
           BrightCtrl
@@ -243,7 +220,6 @@ export default function App() {
       </Box>
       <Text color="#333">{"─".repeat(56)}</Text>
 
-      {/* Toolbar */}
       <Box marginBottom={1} gap={3}>
         <Text color={syncMode ? "green" : "gray"}>
           [{syncMode ? "✓" : " "}] Sync All <Text color="gray">(s)</Text>
@@ -256,7 +232,6 @@ export default function App() {
         </Text>
       </Box>
 
-      {/* Status */}
       <Box marginBottom={1}>
         {loading ? (
           <Text color="gray">{status}...</Text>
@@ -267,7 +242,6 @@ export default function App() {
         )}
       </Box>
 
-      {/* Monitor Cards */}
       {!loading && !error && monitors.length > 0 ? (
         <Box flexDirection="column" gap={0}>
           {monitors.map((m, i) => (
@@ -278,7 +252,6 @@ export default function App() {
 
       {!loading && error ? <ErrorPanel /> : null}
 
-      {/* Brightness input dialog */}
       {typing ? (
         <Box flexDirection="column" marginTop={1} marginBottom={1}>
           <Box
@@ -300,7 +273,6 @@ export default function App() {
         </Box>
       ) : null}
 
-      {/* Footer */}
       {!loading ? (
         <Box marginTop={1}>
           {error ? null : (

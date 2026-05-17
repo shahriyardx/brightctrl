@@ -1,6 +1,6 @@
 {
   "name": "brightctrl",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Terminal UI for DDC/CI monitor brightness control",
   "type": "module",
   "bin": {
@@ -21,13 +21,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "ink": "^5.2.0",
-    "react": "^18.3.0"
+    "ink": "^7.0.3",
+    "react": "^19.2.6"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
-    "@types/react": "^18.3.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^25.8.0",
+    "@types/react": "^19.2.14",
+    "typescript": "^6.0.3"
   },
   "repository": {
     "type": "git",

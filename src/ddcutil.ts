@@ -36,11 +36,14 @@ function powerShell(script: string, timeout = 8000): Promise<string> {
 
 // ── macOS: brightness CLI ───────────────────────────────────────────
 
-function brightnessCLI(args: string[], timeout = 5000): Promise<string> {
+function brightnessCLI(
+  args: string[],
+  timeout = 5000,
+): Promise<{ stdout: string; stderr: string }> {
   return execFileAsync("brightness", args, {
     timeout,
     encoding: "utf-8",
-  }).then((r) => r.stdout.trim())
+  }).then((r) => ({ stdout: r.stdout.trim(), stderr: r.stderr.trim() }))
 }
 
 // ── Backend check ───────────────────────────────────────────────────
@@ -120,7 +123,7 @@ async function detectMonitorsWindows(): Promise<MonitorInfo[]> {
 // ── macOS: brightness CLI ──────────────────────────────────────────
 
 async function detectMonitorsMac(): Promise<MonitorInfo[]> {
-  const stdout = await brightnessCLI(["-l"])
+  const { stdout } = await brightnessCLI(["-l"])
   if (!stdout) return []
 
   const lines = stdout.split("\n")
@@ -150,7 +153,7 @@ async function detectMonitorsMac(): Promise<MonitorInfo[]> {
 async function getBrightnessMac(displayIndex: number): Promise<number | null> {
   try {
     const cliIdx = displayIndex - 1
-    const stdout = await brightnessCLI(["-l"])
+    const { stdout } = await brightnessCLI(["-l"])
     if (!stdout) return null
 
     const targetLine = stdout
@@ -173,13 +176,21 @@ async function setBrightnessMac(
   displayIndex: number,
   value: number,
 ): Promise<boolean> {
+  const level = Math.round(value) / 100
+
+  // Try per-display first, fall back to global set
   try {
     const cliIdx = displayIndex - 1
-    const level = Math.round(value) / 100
     await brightnessCLI(["-d", String(cliIdx), String(level)])
     return true
   } catch {
-    return false
+    // Per-display failed — try global (sets all displays)
+    try {
+      await brightnessCLI([String(level)])
+      return true
+    } catch {
+      return false
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "brightctrl",
-  "version": "0.1.1",
+  "version": "0.0.1",
   "description": "Terminal UI for DDC/CI monitor brightness control",
   "type": "module",
   "bin": {
@@ -34,6 +34,14 @@
     "url": "git+https://github.com/shahriyardx/brightctrl.git"
   },
   "homepage": "https://github.com/shahriyardx/brightctrl",
-  "keywords": ["brightness", "ddc-ci", "ddcutil", "monitor", "tui", "ink", "waybar"],
+  "keywords": [
+    "brightness",
+    "ddc-ci",
+    "ddcutil",
+    "monitor",
+    "tui",
+    "ink",
+    "waybar"
+  ],
   "license": "MIT"
 }

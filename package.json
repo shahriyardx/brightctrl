@@ -4,7 +4,9 @@
   "description": "Terminal UI for DDC/CI monitor brightness control",
   "type": "module",
   "bin": {
-    "brightctrl": "dist/index.js"
+    "brightctrl": "dist/index.js",
+    "bctrl": "dist/index.js",
+    "bc": "dist/index.js"
   },
   "files": [
     "dist",
@@ -14,7 +16,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "bun build src/index.tsx --outdir dist --target node --format esm --external ink --external react --external react-reconciler --external scheduler --external '@types/react' && sed -i 's_^#!/usr/bin/env bun_#!/usr/bin/env node_' dist/index.js",
+    "build": "bun build src/index.tsx --outdir dist --target node --format esm --external ink --external react --external react-reconciler --external scheduler --external '@types/react'",
     "prepublishOnly": "bun run build",
     "lint": "biome check src/",
     "format": "biome check --write src/",

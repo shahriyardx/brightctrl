@@ -1,8 +1,25 @@
 # BrightCtrl
 
-A lightweight DDC/CI monitor brightness controller for Linux — now a terminal UI built with [React](https://react.dev) / [Ink](https://github.com/vadimdemedes/ink) on [Bun](https://bun.sh).
+A lightweight DDC/CI monitor brightness controller for Linux — a terminal UI built with [React](https://react.dev) / [Ink](https://github.com/vadimdemedes/ink) on [Bun](https://bun.sh).
 
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+
+```
+ BrightCtrl ─ DDC/CI Brightness Controller
+ ────────────────────────────────────────────────────────
+ [ ] Precise (p)   [ ] Sync All (s)   ⟳ Refresh (r)   ✕ Quit (q)
+
+ 2 monitor(s) — DDC/CI via ddcutil
+
+ ╭─ Display 1 ──────────────────────────────────────────╮
+ │ █████████████░░░░░░░░░░░░░░░ 50%                     │
+ ╰──────────────────────────────────────────────────────╯
+ ╭─ Display 2 ──────────────────────────────────────────╮
+ │ █████████████░░░░░░░░░░░░░░░ 50%                     │
+ ╰──────────────────────────────────────────────────────╯
+
+ ↑↓ select  h/l ←→ brightness  p precise  i input  s sync  r refresh  q quit
+```
 
 ## Features
 

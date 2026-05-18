@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
+import type { ReactNode } from "react"
 import type { Monitor } from "../ddcutil.js"
 import {
   checkDdcutil,
@@ -6,8 +14,31 @@ import {
   getBrightness,
   setBrightness,
 } from "../ddcutil.js"
+import { getConfig, type BrightCtrlConfig } from "../config.js"
+import { usePlatform } from "../hooks/use-platform.js"
 
-export function useMonitors() {
+type MonitorsContextValue = {
+  monitors: Monitor[]
+  selected: number
+  setSelected: (n: number | ((n: number) => number)) => void
+  syncMode: boolean
+  setSyncMode: (n: boolean | ((n: boolean) => boolean)) => void
+  preciseMode: boolean
+  setPreciseMode: (n: boolean | ((n: boolean) => boolean)) => void
+  step: number
+  adjustBrightness: (delta: number) => void
+  setExactBrightness: (value: number) => void
+  status: string
+  error: string | null
+  loading: boolean
+  lastRefresh: string | null
+  reload: () => void
+  config: BrightCtrlConfig
+}
+
+const MonitorsContext = createContext<MonitorsContextValue | null>(null)
+
+export function MonitorsProvider({ children }: { children: ReactNode }) {
   const [monitors, setMonitors] = useState<Monitor[]>([])
   const [selected, setSelected] = useState(0)
   const [syncMode, setSyncMode] = useState(false)
@@ -15,8 +46,11 @@ export function useMonitors() {
   const [status, setStatus] = useState("Starting...")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [lastRefresh, setLastRefresh] = useState<string | null>(null)
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
   const pendingRef = useRef<Map<number, number>>(new Map())
+  const { os } = usePlatform()
+  const [config] = useState(getConfig())
 
   function scheduleBrightness(index: number, value: number) {
     pendingRef.current.set(index, value)
@@ -64,15 +98,14 @@ export function useMonitors() {
     setError(null)
     setStatus("Checking ddcutil...")
 
+    if (process.platform !== "linux") {
+      setError(`${os} is not supported yet`)
+      return
+    }
+
     const hasBackend = await checkDdcutil()
     if (!hasBackend) {
-      if (process.platform === "win32") {
-        setError("Windows is not supported at this moment")
-      } else if (process.platform === "darwin") {
-        setError("macOS is not supported at this moment")
-      } else {
-        setError("ddcutil not found. Install: sudo pacman -S ddcutil")
-      }
+      setError("ddcutil not found. Install: sudo pacman -S ddcutil")
       setStatus("backend unavailable")
       setLoading(false)
       return
@@ -98,14 +131,15 @@ export function useMonitors() {
     setMonitors(loaded)
     setSelected((s) => Math.min(s, loaded.length - 1))
     setStatus(`${loaded.length} monitor(s) — DDC/CI via ddcutil`)
+    setLastRefresh(new Date().toLocaleTimeString())
     setLoading(false)
-  }, [])
+  }, [os])
 
   useEffect(() => {
     load()
   }, [load])
 
-  return {
+  const value = {
     monitors,
     selected,
     setSelected,
@@ -119,6 +153,22 @@ export function useMonitors() {
     status,
     error,
     loading,
+    lastRefresh,
     reload: load,
+    config,
   }
+
+  return (
+    <MonitorsContext.Provider value={value}>
+      {children}
+    </MonitorsContext.Provider>
+  )
+}
+
+export function useMonitors() {
+  const context = useContext(MonitorsContext)
+  if (!context) {
+    throw new Error("useMonitors must be used inside MonitorsProvider")
+  }
+  return context
 }

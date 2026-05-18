@@ -16,6 +16,7 @@
     "node": ">=18"
   },
   "scripts": {
+    "dev": "bun --watch src/index.tsx",
     "build": "bun build src/index.tsx --outdir dist --target node --format esm --external ink --external react --external react-reconciler --external scheduler --external '@types/react'",
     "prepublishOnly": "bun run build",
     "lint": "biome check src/",
@@ -24,7 +25,8 @@
   },
   "dependencies": {
     "ink": "^7.0.3",
-    "react": "^19.2.6"
+    "react": "^19.2.6",
+    "smol-toml": "^1.6.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

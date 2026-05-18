@@ -7,6 +7,7 @@ export interface MonitorInfo {
   index: number
   name: string
   bus: string
+  id: string
 }
 
 export interface Monitor extends MonitorInfo {
@@ -30,7 +31,7 @@ export async function checkDdcutil(): Promise<boolean> {
 }
 
 export async function detectMonitors(): Promise<MonitorInfo[]> {
-  const stdout = await ddcutil(["detect", "--brief"], 15000)
+  const stdout = await ddcutil(["detect"], 15000)
   const monitors: MonitorInfo[] = []
   let current: Partial<MonitorInfo> | null = null
 
@@ -44,13 +45,22 @@ export async function detectMonitors(): Promise<MonitorInfo[]> {
         index: idxStr ? Number.parseInt(idxStr, 10) : monitors.length + 1,
         name: "Unknown Monitor",
         bus: "",
+        id: "",
       }
     } else if (t.includes("I2C bus:")) {
-      if (current) current.bus = t.replace("I2C bus:", "").trim()
+      if (current) {
+        current.bus = t.replace("I2C bus:", "").trim()
+        current.id = current.bus.replace("/dev/", "")
+      }
     } else if (t.startsWith("Monitor:")) {
       if (current) {
         const p = t.replace("Monitor:", "").trim()
         current.name = p.replace(/\s+unspecified/i, "").trim() || "Monitor"
+      }
+    } else if (t.startsWith("Serial Number:") && current) {
+      const serial = t.replace("Serial Number:", "").trim()
+      if (serial && serial.toLowerCase() !== "unspecified") {
+        current.id = serial.replace(/\s+/g, "_")
       }
     }
   }

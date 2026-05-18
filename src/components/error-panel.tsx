@@ -13,7 +13,7 @@ export function ErrorPanel() {
       <Text color="gray">
         echo 'i2c-dev' | sudo tee /etc/modules-load.d/i2c.conf
       </Text>
-      <Text color="gray"> (log out and in for group change)</Text>
+      ?<Text color="gray"> (log out and in for group change)</Text>
     </Box>
   )
 }

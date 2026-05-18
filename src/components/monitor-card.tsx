@@ -5,28 +5,52 @@ import { BrightnessBar } from "./brightness-bar.js"
 export function MonitorCard({
   monitor,
   selected,
+  position,
+  alias,
 }: {
   monitor: Monitor
   selected: boolean
+  position: number
+  alias?: string | null
 }) {
+  const accent = selected ? "cyan" : position % 3 === 1 ? "green" : "magenta"
+
   return (
     <Box
-      borderStyle={selected ? "round" : "single"}
-      borderColor={selected ? "cyan" : "gray"}
-      flexDirection="column"
+      borderStyle="single"
+      borderColor={selected ? "cyan" : "#29313a"}
       paddingX={1}
-      paddingY={0}
+      paddingY={1}
+      marginBottom={0}
     >
-      <Box gap={1}>
-        <Text bold color={selected ? "cyan" : "white"}>
-          Display {monitor.index}
-        </Text>
-        <Text color="white">{monitor.name}</Text>
-        <Text color="gray">{monitor.bus}</Text>
-        {selected ? <Text color="cyan">◄</Text> : null}
+      <Box width={49}>
+        <Box width={4}>
+          <Text color={accent} bold>
+            {position}
+          </Text>
+        </Box>
+        <Box width={4}>
+          <Text color="gray">▣</Text>
+        </Box>
+        <Box flexDirection="column">
+          <Text color={accent} bold>
+            {alias ?? monitor.name}
+          </Text>
+          <Text color="gray">{monitor.bus || `Display ${monitor.index}`}</Text>
+        </Box>
       </Box>
-      <Box>
-        <BrightnessBar value={monitor.brightness} />
+      <Box flexDirection="column" width={72}>
+        <Text color={accent}>BRIGHTNESS</Text>
+        <BrightnessBar
+          value={monitor.brightness}
+          color={accent}
+          showValue={false}
+        />
+      </Box>
+      <Box width={7} justifyContent="flex-end">
+        <Text color={accent} bold>
+          {Math.round(monitor.brightness)}%
+        </Text>
       </Box>
     </Box>
   )

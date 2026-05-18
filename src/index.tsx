@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { render } from "ink"
-import { runCLI } from "./cli.js"
-import App from "./app.js"
-import { MonitorsProvider } from "./context/monitors-context.js"
-import { NavigationProvider } from "./context/navigation-context.js"
+import { runCLI } from "./cli"
+import App from "./app"
+import { MonitorsProvider } from "./context/monitors-context"
+import { NavigationProvider } from "./context/navigation-context"
 
 const args = process.argv.slice(2)
 

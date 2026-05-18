@@ -1,5 +1,5 @@
 import { Box, Text } from "ink"
-import { useMonitors } from "../context/monitors-context.js"
+import { useMonitors } from "../context/monitors-context"
 
 export function MonitorsTitle() {
   const { syncMode, preciseMode } = useMonitors()

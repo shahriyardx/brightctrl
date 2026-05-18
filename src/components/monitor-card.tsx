@@ -1,6 +1,6 @@
 import { Box, Text } from "ink"
-import type { Monitor } from "../ddcutil.js"
-import { BrightnessBar } from "./brightness-bar.js"
+import type { Monitor } from "../ddcutil"
+import { BrightnessBar } from "./brightness-bar"
 
 export function MonitorCard({
   monitor,

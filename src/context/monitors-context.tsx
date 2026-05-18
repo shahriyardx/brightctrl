@@ -7,15 +7,15 @@ import {
   useState,
 } from "react"
 import type { ReactNode } from "react"
-import type { Monitor } from "../ddcutil.js"
+import type { Monitor } from "../ddcutil"
 import {
   checkDdcutil,
   detectMonitors,
   getBrightness,
   setBrightness,
-} from "../ddcutil.js"
-import { getConfig, type BrightCtrlConfig } from "../config.js"
-import { usePlatform } from "../hooks/use-platform.js"
+} from "../ddcutil"
+import { getConfig, type BrightCtrlConfig } from "../config"
+import { usePlatform } from "../hooks/use-platform"
 
 type MonitorsContextValue = {
   monitors: Monitor[]

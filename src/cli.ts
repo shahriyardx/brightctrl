@@ -1,12 +1,12 @@
-import { detectMonitors, getBrightness, setBrightness } from "./ddcutil.js"
-import { checkDdcutil } from "./ddcutil.js"
+import { detectMonitors, getBrightness, setBrightness } from "./ddcutil"
+import { checkDdcutil } from "./ddcutil"
 import {
   getConfig,
   getAlias,
   setAlias,
   unsetAlias,
   CONFIG_PATH,
-} from "./config.js"
+} from "./config"
 
 function fail(msg: string): never {
   console.error(`error: ${msg}`)

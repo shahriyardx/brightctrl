@@ -1,12 +1,12 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
-import { ErrorPanel } from "../components/error-panel.js"
-import { MonitorCard } from "../components/monitor-card.js"
-import { MonitorsTitle } from "../components/monitors-title.js"
-import { useNavigation } from "../context/navigation-context.js"
-import { useMonitors } from "../context/monitors-context.js"
-import Header from "../components/header.js"
-import { usePlatform } from "../hooks/use-platform.js"
+import { ErrorPanel } from "../components/error-panel"
+import { MonitorCard } from "../components/monitor-card"
+import { MonitorsTitle } from "../components/monitors-title"
+import { useNavigation } from "../context/navigation-context"
+import { useMonitors } from "../context/monitors-context"
+import Header from "../components/header"
+import { usePlatform } from "../hooks/use-platform"
 
 export function HomePage() {
   const { exit } = useApp()

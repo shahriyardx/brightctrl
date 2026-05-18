@@ -1,7 +1,7 @@
 import { Box } from "ink"
-import { useNavigation } from "./context/navigation-context.js"
-import { HelpPage } from "./pages/help-page.js"
-import { HomePage } from "./pages/home-page.js"
+import { useNavigation } from "./context/navigation-context"
+import { HelpPage } from "./pages/help-page"
+import { HomePage } from "./pages/home-page"
 
 export default function App() {
   const { page } = useNavigation()

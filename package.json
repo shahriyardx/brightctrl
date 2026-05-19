@@ -18,6 +18,7 @@
   "scripts": {
     "dev": "bun --watch src/index.tsx",
     "build": "bun build src/index.tsx --outdir dist --target node --format esm --external ink --external react --external react-reconciler --external scheduler --external '@types/react'",
+    "compile": "bun build src/index.tsx --compile --outfile brightctrl --external react-devtools-core",
     "prepublishOnly": "bun run build",
     "lint": "biome check src/",
     "format": "biome check --write src/",

@@ -1,100 +1,50 @@
 # BrightCtrl
 
-A lightweight DDC/CI monitor brightness controller for Linux — a terminal UI built with [React](https://react.dev) / [Ink](https://github.com/vadimdemedes/ink) on [Bun](https://bun.sh).
+Adjust brightness of your monitors right from the terminal.
 
-![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![Screenshot](assets/banner.png)
 
-```
- BrightCtrl ─ DDC/CI Brightness Controller
- ────────────────────────────────────────────────────────
- [ ] Precise (p)   [ ] Sync All (s)   ⟳ Refresh (r)   ✕ Quit (q)
-
- 2 monitor(s) — DDC/CI via ddcutil
-
- ╭─ Display 1 ──────────────────────────────────────────╮
- │ █████████████░░░░░░░░░░░░░░░ 50%                     │
- ╰──────────────────────────────────────────────────────╯
- ╭─ Display 2 ──────────────────────────────────────────╮
- │ █████████████░░░░░░░░░░░░░░░ 50%                     │
- ╰──────────────────────────────────────────────────────╯
-
- ↑↓ select  h/l ←→ brightness  p precise  s sync  r refresh  q quit
-```
-
-## Features
-
-- Auto-detects all DDC/CI-capable monitors
-- Per-monitor brightness bars with live percentage
-- Arrow key / vim (`h`/`l`) brightness adjustment (5% steps)
-- **Sync mode** (`s`) — control all monitors at once
-- 500ms debounce on DDC writes (no flooding the i2c bus)
-- Brightness-dependent color coding (red ≤20%, cyan 21-89%, yellow ≥90%)
-
-## Requirements
-
-### System
-
-| Distro | Command |
-|---|---|
-| Arch / Manjaro | `sudo pacman -S ddcutil` |
-| Debian / Ubuntu | `sudo apt install ddcutil` |
-| Fedora / RHEL | `sudo dnf install ddcutil` |
-
-Then set up the i2c kernel module and add yourself to the i2c group:
+## Install
 
 ```bash
-sudo usermod -aG i2c $USER
-sudo modprobe i2c-dev
-
-# Persist across reboots:
-echo 'i2c-dev' | sudo tee /etc/modules-load.d/i2c.conf
-
-# Log out and back in for the group change to take effect.
+npm install -g brightctrl
 ```
 
-Verify everything works:
-
-```bash
-ddcutil detect
-```
-
-### Runtime
-
-- [Node.js](https://nodejs.org) >= 18
-- Or [Bun](https://bun.sh) 1.x (for development)
-
-## Install & Run
-
-### Quick — no install needed
+Or run without installing:
 
 ```bash
 npx brightctrl
 ```
 
-### Global install
+## Getting Started
 
-```bash
-npm install -g brightctrl
-brightctrl
-```
+1. Install `ddcutil`:
 
-### From source
+   - **Arch / Manjaro:** `sudo pacman -S ddcutil`
+   - **Debian / Ubuntu:** `sudo apt install ddcutil`
+   - **Fedora:** `sudo dnf install ddcutil`
 
-```bash
-git clone https://github.com/shahriyardx/brightctrl.git
-cd brightctrl
-bun install
-bun src/index.tsx
-```
+2. Add yourself to the `i2c` group and load the kernel module:
 
-### Controls
+   ```bash
+   sudo usermod -aG i2c $USER
+   sudo modprobe i2c-dev
+   ```
+
+3. **Log out and back in** (or restart).
+
+4. Run `brightctrl` and adjust away.
+
+## Controls
 
 | Key | Action |
 |---|---|
-| `↑` / `↓` | Select monitor |
-| `←` / `h` | Decrease brightness 5% |
-| `→` / `l` | Increase brightness 5% |
-| `s` | Toggle sync mode (all monitors) |
-| `r` | Refresh monitor detection |
+| `↑` `↓` | Pick a monitor |
+| `←` `→` | Turn brightness down/up |
+| `s` | Sync — adjust all monitors at once |
+| `r` | Refresh monitor list |
 | `q` | Quit |
 
+Toggle **precise mode** with `p` for 1% steps instead of 5%.
+
+Brightness changes are saved automatically and restored on next launch.

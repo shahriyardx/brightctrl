@@ -31,15 +31,19 @@ export async function checkDdcutil(): Promise<boolean> {
 }
 
 export async function detectMonitors(): Promise<MonitorInfo[]> {
-  const stdout = await ddcutil(["detect"], 15000)
+  const stdout = await ddcutil(["detect", "-v"], 15000)
   const monitors: MonitorInfo[] = []
   let current: Partial<MonitorInfo> | null = null
+  let connector = ""
   let inEdid = false
 
   for (const line of stdout.split("\n")) {
     const t = line.trim()
     if (t.startsWith("Display ")) {
-      if (current?.index != null) monitors.push(current as MonitorInfo)
+      if (current?.index != null) {
+        if (!current.id) current.id = connector
+        monitors.push(current as MonitorInfo)
+      }
       const m = t.match(/Display\s+(\d+)/)
       const idxStr = m?.[1]
       current = {
@@ -48,29 +52,28 @@ export async function detectMonitors(): Promise<MonitorInfo[]> {
         bus: "",
         id: "",
       }
+      connector = ""
       inEdid = false
     } else if (t.includes("I2C bus:")) {
-      if (current) {
-        current.bus = t.replace("I2C bus:", "").trim()
-        current.id = current.bus.replace("/dev/", "")
-      }
+      if (current) current.bus = t.replace("I2C bus:", "").trim()
       inEdid = false
+    } else if (t.startsWith("DRM_connector:")) {
+      connector = t
+        .replace("DRM_connector:", "")
+        .trim()
+        .replace(/^card\d+-/, "")
     } else if (t === "EDID synopsis:") {
       inEdid = true
     } else if (inEdid) {
       if (t.startsWith("Model:")) {
-        if (current) {
-          current.name = t.replace("Model:", "").trim() || "Monitor"
-        }
-      } else if (t.startsWith("Serial number:") && current) {
-        const serial = t.replace("Serial number:", "").trim()
-        if (serial) {
-          current.id = serial.replace(/\s+/g, "_")
-        }
+        if (current) current.name = t.replace("Model:", "").trim() || "Monitor"
       }
     }
   }
-  if (current?.index != null) monitors.push(current as MonitorInfo)
+  if (current?.index != null) {
+    if (!current.id) current.id = connector
+    monitors.push(current as MonitorInfo)
+  }
   return monitors
 }
 

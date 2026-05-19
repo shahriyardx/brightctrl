@@ -90,7 +90,7 @@ async function cmdSet(target: string, valueStr: string) {
   const { index, id, name } = await resolveTarget(target)
   const ok = await setBrightness(index, value)
   if (!ok) fail(`could not set brightness for ${id} (${name})`)
-  console.log(value)
+  console.log(`${name} brightness set to ${value}`)
 }
 
 function cmdAlias(id: string, alias: string | undefined) {

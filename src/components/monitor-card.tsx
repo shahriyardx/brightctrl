@@ -29,9 +29,6 @@ export function MonitorCard({
             {position}
           </Text>
         </Box>
-        <Box width={4}>
-          <Text color="gray">▣</Text>
-        </Box>
         <Box flexDirection="column">
           <Text color={accent} bold>
             {alias ?? monitor.name}

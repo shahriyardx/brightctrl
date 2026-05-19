@@ -14,7 +14,12 @@ import {
   getBrightness,
   setBrightness,
 } from "../ddcutil"
-import { getConfig, type BrightCtrlConfig } from "../config"
+import {
+  getConfig,
+  readMonitorCache,
+  writeMonitorCache,
+  type BrightCtrlConfig,
+} from "../config"
 import { usePlatform } from "../hooks/use-platform"
 
 type MonitorsContextValue = {
@@ -93,51 +98,78 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    setStatus("Checking ddcutil...")
+  const cachedRef = useRef(false)
 
-    if (process.platform !== "linux") {
-      setError(`${os} is not supported yet`)
-      return
-    }
+  const load = useCallback(
+    async (force = false) => {
+      if (!force && cachedRef.current) return
 
-    const hasBackend = await checkDdcutil()
-    if (!hasBackend) {
-      setError("ddcutil not found. Install: sudo pacman -S ddcutil")
-      setStatus("backend unavailable")
+      setError(null)
+      setStatus("Checking ddcutil...")
+
+      if (process.platform !== "linux") {
+        setError(`${os} is not supported yet`)
+        return
+      }
+
+      const hasBackend = await checkDdcutil()
+      if (!hasBackend) {
+        setError("ddcutil not found. Install: sudo pacman -S ddcutil")
+        setStatus("backend unavailable")
+        setLoading(false)
+        return
+      }
+
+      setStatus("Detecting monitors...")
+      const infoList = await detectMonitors()
+
+      if (infoList.length === 0) {
+        setError("No DDC/CI monitors detected")
+        setStatus("No monitors found")
+        setLoading(false)
+        return
+      }
+
+      setStatus(`Reading brightness for ${infoList.length} monitor(s)...`)
+      const loaded: Monitor[] = []
+      for (const info of infoList) {
+        const b = await getBrightness(info.index)
+        loaded.push({ ...info, brightness: b ?? 50 })
+      }
+
+      writeMonitorCache(loaded)
+      setMonitors(loaded)
+      setSelected((s) => Math.min(s, loaded.length - 1))
+      setStatus(`${loaded.length} monitor(s) — DDC/CI via ddcutil`)
+      setLastRefresh(new Date().toLocaleTimeString())
       setLoading(false)
-      return
-    }
+    },
+    [os],
+  )
 
-    setStatus("Detecting monitors...")
-    const infoList = await detectMonitors()
+  const reload = useCallback(() => load(true), [load])
 
-    if (infoList.length === 0) {
-      setError("No DDC/CI monitors detected")
-      setStatus("No monitors found")
-      setLoading(false)
-      return
-    }
-
-    setStatus(`Reading brightness for ${infoList.length} monitor(s)...`)
-    const loaded: Monitor[] = []
-    for (const info of infoList) {
-      const b = await getBrightness(info.index)
-      loaded.push({ ...info, brightness: b ?? 50 })
-    }
-
-    setMonitors(loaded)
-    setSelected((s) => Math.min(s, loaded.length - 1))
-    setStatus(`${loaded.length} monitor(s) — DDC/CI via ddcutil`)
-    setLastRefresh(new Date().toLocaleTimeString())
-    setLoading(false)
-  }, [os])
+  const persistTimer = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
+    const cached = readMonitorCache()
+    if (cached && cached.length > 0) {
+      setMonitors(cached.map((m) => ({ ...m, brightness: m.brightness ?? 50 })))
+      setLoading(false)
+      setStatus("Ready")
+      cachedRef.current = true
+    }
     load()
   }, [load])
+
+  useEffect(() => {
+    if (monitors.length === 0) return
+    if (persistTimer.current) clearTimeout(persistTimer.current)
+    persistTimer.current = setTimeout(() => writeMonitorCache(monitors), 2000)
+    return () => {
+      if (persistTimer.current) clearTimeout(persistTimer.current)
+    }
+  }, [monitors])
 
   const value = {
     monitors,
@@ -154,7 +186,7 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
     error,
     loading,
     lastRefresh,
-    reload: load,
+    reload,
     config,
   }
 

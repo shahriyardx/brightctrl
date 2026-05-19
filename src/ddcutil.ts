@@ -34,6 +34,7 @@ export async function detectMonitors(): Promise<MonitorInfo[]> {
   const stdout = await ddcutil(["detect"], 15000)
   const monitors: MonitorInfo[] = []
   let current: Partial<MonitorInfo> | null = null
+  let inEdid = false
 
   for (const line of stdout.split("\n")) {
     const t = line.trim()
@@ -47,20 +48,25 @@ export async function detectMonitors(): Promise<MonitorInfo[]> {
         bus: "",
         id: "",
       }
+      inEdid = false
     } else if (t.includes("I2C bus:")) {
       if (current) {
         current.bus = t.replace("I2C bus:", "").trim()
         current.id = current.bus.replace("/dev/", "")
       }
-    } else if (t.startsWith("Monitor:")) {
-      if (current) {
-        const p = t.replace("Monitor:", "").trim()
-        current.name = p.replace(/\s+unspecified/i, "").trim() || "Monitor"
-      }
-    } else if (t.startsWith("Serial Number:") && current) {
-      const serial = t.replace("Serial Number:", "").trim()
-      if (serial && serial.toLowerCase() !== "unspecified") {
-        current.id = serial.replace(/\s+/g, "_")
+      inEdid = false
+    } else if (t === "EDID synopsis:") {
+      inEdid = true
+    } else if (inEdid) {
+      if (t.startsWith("Model:")) {
+        if (current) {
+          current.name = t.replace("Model:", "").trim() || "Monitor"
+        }
+      } else if (t.startsWith("Serial number:") && current) {
+        const serial = t.replace("Serial number:", "").trim()
+        if (serial) {
+          current.id = serial.replace(/\s+/g, "_")
+        }
       }
     }
   }

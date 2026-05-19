@@ -19,20 +19,17 @@ async function resolveTarget(
   const monitors = await detectMonitors()
   const config = getConfig()
 
-  // 1. Try index
   const asNum = Number.parseInt(target, 10)
   if (!Number.isNaN(asNum)) {
     const m = monitors.find((x) => x.index === asNum)
     if (m) return { index: m.index, id: m.id, name: m.name }
   }
 
-  // 2. Try id match
   {
     const m = monitors.find((x) => x.id === target)
     if (m) return { index: m.index, id: m.id, name: m.name }
   }
 
-  // 3. Try alias lookup → id match
   const aliasEntry = Object.entries(config.aliases).find(
     ([, v]) => v === target,
   )
@@ -69,7 +66,7 @@ async function cmdList() {
     const alias = config.aliases[m.id]
     const parts = [
       m.id.padEnd(16),
-      (m.name.length > 20 ? m.name.slice(0, 17) + "..." : m.name).padEnd(22),
+      (m.name.length > 20 ? `${m.name.slice(0, 17)}...` : m.name).padEnd(22),
       alias ? alias.padEnd(12) : "-".padEnd(12),
       brightness != null ? `${brightness}%` : "N/A",
     ]
@@ -137,7 +134,6 @@ export async function runCLI(args: string[]) {
     return
   }
 
-  // Commands that don't need ddcutil check
   if (cmd === "alias") {
     cmdAlias(args[1], args[2])
     return

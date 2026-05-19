@@ -31,7 +31,7 @@ export async function checkDdcutil(): Promise<boolean> {
 }
 
 export async function detectMonitors(): Promise<MonitorInfo[]> {
-  const stdout = await ddcutil(["detect", "-v"], 15000)
+  const stdout = await ddcutil(["detect", "--ddc-checks-async-min", "1"], 15000)
   const monitors: MonitorInfo[] = []
   let current: Partial<MonitorInfo> | null = null
   let connector = ""

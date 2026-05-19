@@ -9,9 +9,7 @@ const Header = () => {
           <Text color="green" bold>
             brightctrl
           </Text>
-          <Text color="white">
-            External monitor brightness control
-          </Text>
+          <Text color="white">External monitor brightness control</Text>
           <Text color="gray">v{pkg.version}</Text>
         </Box>
         <Box justifyContent="flex-end" flexGrow={1}>

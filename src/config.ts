@@ -6,6 +6,8 @@ import type { Monitor } from "./ddcutil"
 
 export type BrightCtrlConfig = {
   aliases: Record<string, string>
+  syncMode: boolean
+  preciseMode: boolean
 }
 
 const CONFIG_DIR = join(homedir(), ".config", "brightctrl")
@@ -14,6 +16,8 @@ const CACHE_PATH = join(CONFIG_DIR, "monitors.json")
 
 const DEFAULT: BrightCtrlConfig = {
   aliases: {},
+  syncMode: false,
+  preciseMode: false,
 }
 
 function ensureConfig(): BrightCtrlConfig {
@@ -28,6 +32,8 @@ function ensureConfig(): BrightCtrlConfig {
 
   return {
     aliases: (parsed.aliases ?? {}) as Record<string, string>,
+    syncMode: parsed.syncMode ?? false,
+    preciseMode: parsed.preciseMode ?? false,
   }
 }
 
@@ -52,6 +58,20 @@ export function setAlias(id: string, alias: string): BrightCtrlConfig {
 export function unsetAlias(id: string): BrightCtrlConfig {
   const config = getConfig()
   delete config.aliases[id]
+  writeFileSync(CONFIG_PATH, stringify(config), "utf-8")
+  return config
+}
+
+export function setSyncMode(value: boolean): BrightCtrlConfig {
+  const config = getConfig()
+  config.syncMode = value
+  writeFileSync(CONFIG_PATH, stringify(config), "utf-8")
+  return config
+}
+
+export function setPreciseMode(value: boolean): BrightCtrlConfig {
+  const config = getConfig()
+  config.preciseMode = value
   writeFileSync(CONFIG_PATH, stringify(config), "utf-8")
   return config
 }

@@ -17,9 +17,7 @@ export function MonitorsTitle() {
   return (
     <Box marginBottom={1} alignItems="center" justifyContent="space-between">
       <Box>
-        {loading && (
-          <Text color="cyan">{SPINNER[frame]}{" "}</Text>
-        )}
+        {loading && <Text color="cyan">{SPINNER[frame]} </Text>}
         <Text color="cyan" bold>
           MONITORS
         </Text>

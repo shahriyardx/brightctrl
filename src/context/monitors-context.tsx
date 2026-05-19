@@ -18,6 +18,8 @@ import {
   getConfig,
   readMonitorCache,
   writeMonitorCache,
+  setSyncMode as persistSyncMode,
+  setPreciseMode as persistPreciseMode,
   type BrightCtrlConfig,
 } from "../config"
 import { usePlatform } from "../hooks/use-platform"
@@ -44,10 +46,30 @@ type MonitorsContextValue = {
 const MonitorsContext = createContext<MonitorsContextValue | null>(null)
 
 export function MonitorsProvider({ children }: { children: ReactNode }) {
+  const [config] = useState(getConfig())
   const [monitors, setMonitors] = useState<Monitor[]>([])
   const [selected, setSelected] = useState(0)
-  const [syncMode, setSyncMode] = useState(false)
-  const [preciseMode, setPreciseMode] = useState(false)
+  const [syncMode, setSyncModeState] = useState(config.syncMode)
+  const [preciseMode, setPreciseModeState] = useState(config.preciseMode)
+
+  const setSyncMode = useCallback((n: boolean | ((n: boolean) => boolean)) => {
+    setSyncModeState((prev) => {
+      const next = typeof n === "function" ? n(prev) : n
+      persistSyncMode(next)
+      return next
+    })
+  }, [])
+
+  const setPreciseMode = useCallback(
+    (n: boolean | ((n: boolean) => boolean)) => {
+      setPreciseModeState((prev) => {
+        const next = typeof n === "function" ? n(prev) : n
+        persistPreciseMode(next)
+        return next
+      })
+    },
+    [],
+  )
   const [status, setStatus] = useState("Starting...")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -55,7 +77,6 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
   const pendingRef = useRef<Map<number, number>>(new Map())
   const { os } = usePlatform()
-  const [config] = useState(getConfig())
 
   function scheduleBrightness(index: number, value: number) {
     pendingRef.current.set(index, value)
@@ -63,10 +84,11 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
     debounceTimer.current = setTimeout(() => {
       const vals = new Map(pendingRef.current)
       pendingRef.current.clear()
-      for (const [idx, v] of vals) {
-        setBrightness(idx, v)
-      }
-    }, 500)
+
+      Promise.all(
+        Array.from(vals.entries()).map(([idx, v]) => setBrightness(idx, v)),
+      )
+    }, 1000)
   }
 
   const step = preciseMode ? 1 : 5

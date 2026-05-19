@@ -78,7 +78,11 @@ export function HomePage() {
               ) : (
                 <>
                   {error && (
-                    <Box borderStyle="single" borderColor="red" marginBottom={1}>
+                    <Box
+                      borderStyle="single"
+                      borderColor="red"
+                      marginBottom={1}
+                    >
                       <Text color="red">{error}</Text>
                     </Box>
                   )}

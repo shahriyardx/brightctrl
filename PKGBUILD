@@ -15,12 +15,12 @@ sha256sums=("SKIP")
 
 prepare() {
   cd "$srcdir/$pkgname-$pkgver"
-  bun install --frozen-lockfile
+  bun install
 }
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
-  bun run compile
+  bun build src/index.tsx --compile --outfile brightctrl --minify
 }
 
 package() {

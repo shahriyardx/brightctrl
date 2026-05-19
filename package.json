@@ -1,6 +1,6 @@
 {
   "name": "brightctrl",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A lightweight DDC/CI monitor brightness controller for Linux",
   "type": "module",
   "bin": {

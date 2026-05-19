@@ -24,13 +24,13 @@ export function MonitorsTitle() {
       </Box>
 
       <Box flexShrink={0} justifyContent="flex-end" gap={1}>
-        <Text color={"white"} backgroundColor={syncMode ? "green" : "gray"}>
-          {" Sync"}
+        <Text backgroundColor={syncMode ? "green" : "gray"}>
+          <Text color={syncMode ? "black" : "white"}> Sync</Text>
           <Text dimColor> (s) </Text>
         </Text>
 
-        <Text color={"white"} backgroundColor={preciseMode ? "green" : "gray"}>
-          {" Precise"}
+        <Text backgroundColor={preciseMode ? "green" : "gray"}>
+          <Text color={preciseMode ? "black" : "white"}> Precise</Text>
           <Text dimColor> (p) </Text>
         </Text>
       </Box>

@@ -6,6 +6,8 @@ out
 dist
 *.tgz
 brightctrl
+brightctrl-x86_64
+
 
 # code coverage
 coverage

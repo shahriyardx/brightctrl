@@ -18,7 +18,7 @@ A lightweight DDC/CI monitor brightness controller for Linux — a terminal UI b
  │ █████████████░░░░░░░░░░░░░░░ 50%                     │
  ╰──────────────────────────────────────────────────────╯
 
- ↑↓ select  h/l ←→ brightness  p precise  i input  s sync  r refresh  q quit
+ ↑↓ select  h/l ←→ brightness  p precise  s sync  r refresh  q quit
 ```
 
 ## Features
@@ -27,7 +27,6 @@ A lightweight DDC/CI monitor brightness controller for Linux — a terminal UI b
 - Per-monitor brightness bars with live percentage
 - Arrow key / vim (`h`/`l`) brightness adjustment (5% steps)
 - **Sync mode** (`s`) — control all monitors at once
-- Direct input dialog (`i`) — type a specific brightness value
 - 500ms debounce on DDC writes (no flooding the i2c bus)
 - Brightness-dependent color coding (red ≤20%, cyan 21-89%, yellow ≥90%)
 
@@ -95,7 +94,6 @@ bun src/index.tsx
 | `↑` / `↓` | Select monitor |
 | `←` / `h` | Decrease brightness 5% |
 | `→` / `l` | Increase brightness 5% |
-| `i` | Open input dialog (type 0–100, Enter to confirm) |
 | `s` | Toggle sync mode (all monitors) |
 | `r` | Refresh monitor detection |
 | `q` | Quit |

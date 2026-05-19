@@ -1,5 +1,4 @@
 import { Box, Text, useApp, useInput } from "ink"
-import { useState } from "react"
 import { ErrorPanel } from "../components/error-panel"
 import { MonitorCard } from "../components/monitor-card"
 import { MonitorsTitle } from "../components/monitors-title"
@@ -15,6 +14,7 @@ export function HomePage() {
     monitors,
     selected,
     setSelected,
+    syncMode,
     setSyncMode,
     setPreciseMode,
     step,
@@ -27,27 +27,8 @@ export function HomePage() {
     config,
   } = useMonitors()
   const { os, isSupported } = usePlatform()
-  const [typing, setTyping] = useState(false)
-  const [typed, setTyped] = useState("")
 
   useInput((input, key) => {
-    if (typing) {
-      if (key.escape) {
-        setTyping(false)
-        setTyped("")
-      } else if (key.return) {
-        const v = Number.parseInt(typed, 10)
-        if (!Number.isNaN(v)) setExactBrightness(v)
-        setTyping(false)
-        setTyped("")
-      } else if (key.backspace) {
-        setTyped((p) => p.slice(0, -1))
-      } else if (/^[0-9]$/.test(input)) {
-        setTyped((p) => (p + input).slice(0, 3))
-      }
-      return
-    }
-
     if (input === "q") exit()
 
     if (input === "?") {
@@ -69,9 +50,6 @@ export function HomePage() {
       setSyncMode((s) => !s)
     } else if (input === "r") {
       reload()
-    } else if (input === "i") {
-      setTyping(true)
-      setTyped("")
     } else if (input === "m") {
       setExactBrightness(0)
     }
@@ -103,33 +81,13 @@ export function HomePage() {
                     key={m.index}
                     monitor={m}
                     selected={i === selected}
+                    syncMode={syncMode}
                     position={i + 1}
                     alias={config.aliases[m.id]}
                   />
                 ))
               )}
             </Box>
-
-            {typing ? (
-              <Box flexDirection="column" marginTop={1} marginBottom={1}>
-                <Box
-                  borderStyle="single"
-                  borderColor="cyan"
-                  paddingX={1}
-                  flexDirection="column"
-                >
-                  <Box gap={1}>
-                    <Text bold color="cyan">
-                      Brightness:
-                    </Text>
-                    <Text bold color="white">
-                      {typed || "0"}_
-                    </Text>
-                  </Box>
-                  <Text color="gray">Enter 0-100 ↵ confirm ⎋ cancel</Text>
-                </Box>
-              </Box>
-            ) : null}
           </Box>
         ) : (
           <Box flexDirection="column">

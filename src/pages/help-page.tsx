@@ -36,7 +36,6 @@ export function HelpPage() {
             </Box>
             <Text color="#29313a">│ </Text>
             <Box flexDirection="column" marginLeft={2}>
-              <ControlRow keys="i" label="Set exact brightness" />
               <ControlRow keys="p" label="Toggle precise mode" />
               <ControlRow keys="s" label="Sync all monitors" />
               <ControlRow keys="r" label="Refresh monitor list" />

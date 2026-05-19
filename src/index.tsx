@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { render } from "ink"
 import { runCLI } from "./cli"
 import App from "./app"

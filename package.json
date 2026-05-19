@@ -1,6 +1,6 @@
 {
   "name": "brightctrl",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A lightweight DDC/CI monitor brightness controller for Linux",
   "type": "module",
   "bin": {
@@ -17,8 +17,7 @@
   },
   "scripts": {
     "dev": "bun --watch src/index.tsx",
-    "build": "bun build src/index.tsx --outdir dist --target node --format esm --external ink --external react --external react-reconciler --external scheduler --external '@types/react'",
-    "compile": "bun build src/index.tsx --compile --outfile brightctrl --minify",
+    "build": "bun build src/index.tsx --outfile dist/index.js --target node --format esm --external '@types/react' --banner '#!/usr/bin/env node' && chmod +x dist/index.js",
     "prepublishOnly": "bun run build",
     "lint": "biome check src/",
     "format": "biome check --write src/",

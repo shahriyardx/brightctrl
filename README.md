@@ -6,6 +6,14 @@ Adjust brightness of your monitors right from the terminal.
 
 ## Install
 
+### Arch Linux (AUR)
+
+```bash
+yay -S brightctrl
+```
+
+### npm
+
 ```bash
 npm install -g brightctrl
 ```

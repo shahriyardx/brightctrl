@@ -64,11 +64,11 @@ export function HomePage() {
             <MonitorsTitle />
 
             <Box flexDirection="column">
-              {loading ? (
+              {loading && monitors.length === 0 ? (
                 <Box borderStyle="single" borderColor="#29313a">
                   <Text color="gray">{status}...</Text>
                 </Box>
-              ) : error ? (
+              ) : error && monitors.length === 0 ? (
                 <Box flexDirection="column">
                   <Box borderStyle="single" borderColor="red">
                     <Text color="red">{error}</Text>
@@ -76,16 +76,23 @@ export function HomePage() {
                   <ErrorPanel />
                 </Box>
               ) : (
-                monitors.map((m, i) => (
-                  <MonitorCard
-                    key={m.index}
-                    monitor={m}
-                    selected={i === selected}
-                    syncMode={syncMode}
-                    position={i + 1}
-                    alias={config.aliases[m.id]}
-                  />
-                ))
+                <>
+                  {error && (
+                    <Box borderStyle="single" borderColor="red" marginBottom={1}>
+                      <Text color="red">{error}</Text>
+                    </Box>
+                  )}
+                  {monitors.map((m, i) => (
+                    <MonitorCard
+                      key={m.index}
+                      monitor={m}
+                      selected={i === selected}
+                      syncMode={syncMode}
+                      position={i + 1}
+                      alias={config.aliases[m.id]}
+                    />
+                  ))}
+                </>
               )}
             </Box>
           </Box>

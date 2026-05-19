@@ -104,6 +104,7 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
     async (force = false) => {
       if (!force && cachedRef.current) return
 
+      setLoading(true)
       setError(null)
       setStatus("Checking ddcutil...")
 

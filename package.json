@@ -1,7 +1,7 @@
 {
   "name": "brightctrl",
-  "version": "0.0.3",
-  "description": "Terminal UI for DDC/CI monitor brightness control",
+  "version": "0.0.4",
+  "description": "A lightweight DDC/CI monitor brightness controller for Linux",
   "type": "module",
   "bin": {
     "brightctrl": "dist/index.js",

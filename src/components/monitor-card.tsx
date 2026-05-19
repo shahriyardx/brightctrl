@@ -8,12 +8,16 @@ export function MonitorCard({
   syncMode,
   position,
   alias,
+  editing,
+  editBuffer,
 }: {
   monitor: Monitor
   selected: boolean
   syncMode: boolean
   position: number
   alias?: string | null
+  editing?: boolean
+  editBuffer?: string
 }) {
   const accent = selected || syncMode ? "cyan" : "gray"
 
@@ -55,9 +59,15 @@ export function MonitorCard({
         />
       </Box>
       <Box width={7} justifyContent="flex-end">
-        <Text color={accent} bold>
-          {Math.round(monitor.brightness)}%
-        </Text>
+        {editing ? (
+          <Text color="cyan" bold>
+            {editBuffer || " "}<Text color="cyan">|</Text>
+          </Text>
+        ) : (
+          <Text color={accent} bold>
+            {Math.round(monitor.brightness)}%
+          </Text>
+        )}
       </Box>
     </Box>
   )

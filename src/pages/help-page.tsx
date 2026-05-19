@@ -33,6 +33,7 @@ export function HelpPage() {
               <ControlRow keys="← / h" label="Decrease brightness" />
               <ControlRow keys="→ / l" label="Increase brightness" />
               <ControlRow keys="1 - 9" label="Select monitor by number" />
+              <ControlRow keys="/" label="Enter brightness value (0-100)" />
             </Box>
             <Text color="#29313a">│ </Text>
             <Box flexDirection="column" marginLeft={2}>

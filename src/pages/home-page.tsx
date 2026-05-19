@@ -1,4 +1,5 @@
 import { Box, Text, useApp, useInput } from "ink"
+import { useState } from "react"
 import { ErrorPanel } from "../components/error-panel"
 import { MonitorCard } from "../components/monitor-card"
 import { MonitorsTitle } from "../components/monitors-title"
@@ -27,12 +28,38 @@ export function HomePage() {
     config,
   } = useMonitors()
   const { os, isSupported } = usePlatform()
+  const [inputMode, setInputMode] = useState(false)
+  const [editBuffer, setEditBuffer] = useState("")
 
   useInput((input, key) => {
+    if (inputMode) {
+      if (key.return) {
+        const val = Number.parseInt(editBuffer, 10)
+        if (!Number.isNaN(val)) {
+          setExactBrightness(Math.max(0, Math.min(100, val)))
+        }
+        setInputMode(false)
+        setEditBuffer("")
+      } else if (key.escape || input === "/") {
+        setInputMode(false)
+        setEditBuffer("")
+      } else if (key.backspace || key.delete) {
+        setEditBuffer((s) => s.slice(0, -1))
+      } else if (/^[0-9]$/.test(input) && editBuffer.length < 3) {
+        setEditBuffer((s) => s + input)
+      }
+      return
+    }
+
     if (input === "q") exit()
 
     if (input === "?") {
       goHelp()
+    } else if (input === "/") {
+      if (monitors.length > 0) {
+        setInputMode(true)
+        setEditBuffer("")
+      }
     } else if (/^[1-9]$/.test(input)) {
       const next = Number.parseInt(input, 10) - 1
       setSelected(Math.max(0, Math.min(monitors.length - 1, next)))
@@ -94,6 +121,8 @@ export function HomePage() {
                       syncMode={syncMode}
                       position={i + 1}
                       alias={config.aliases[m.id]}
+                      editing={inputMode && i === selected}
+                      editBuffer={editBuffer}
                     />
                   ))}
                 </>

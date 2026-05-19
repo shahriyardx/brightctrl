@@ -1,4 +1,5 @@
 import { Box, Text } from "ink"
+import pkg from "../../package.json"
 
 const Header = () => {
   return (
@@ -8,8 +9,10 @@ const Header = () => {
           <Text color="green" bold>
             brightctrl
           </Text>
-          <Text color="white">External monitor brightness control</Text>
-          <Text color="gray">v0.0.3</Text>
+          <Text color="white">
+            External monitor brightness control
+          </Text>
+          <Text color="gray">v{pkg.version}</Text>
         </Box>
         <Box justifyContent="flex-end" flexGrow={1}>
           <Text color="gray">Press </Text>

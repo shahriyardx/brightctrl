@@ -18,8 +18,8 @@ export function BrightnessBar({
 
   return (
     <Box>
-      <Text color={barColor}>{filled > 0 ? "▌".repeat(filled) : ""}</Text>
-      <Text color="#444">{empty > 0 ? "░".repeat(empty) : ""}</Text>
+      <Text color={barColor}>{filled > 0 ? "▰".repeat(filled) : ""}</Text>
+      <Text color="#444">{empty > 0 ? "▱".repeat(empty) : ""}</Text>
       {showValue ? (
         <>
           <Text> </Text>

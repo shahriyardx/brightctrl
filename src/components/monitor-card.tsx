@@ -29,7 +29,7 @@ export function MonitorCard({
       paddingY={1}
       marginBottom={0}
     >
-      <Box width={49}>
+      <Box width={30}>
         <Box width={4}>
           <Text color={accent} bold>
             {position}
@@ -50,24 +50,27 @@ export function MonitorCard({
           <Text color="gray">{monitor.bus || `Display ${monitor.index}`}</Text>
         </Box>
       </Box>
-      <Box flexDirection="column" width={72}>
-        <Text color={accent}>BRIGHTNESS</Text>
+      <Box flexDirection="column" flexGrow={1}>
+        <Box justifyContent="space-between">
+          <Text color={accent}>BRIGHTNESS</Text>
+          <Box width={7} justifyContent="flex-end">
+            {editing ? (
+              <Text color="cyan" bold>
+                {editBuffer || " "}
+                <Text color="cyan">|</Text>
+              </Text>
+            ) : (
+              <Text color={accent} bold>
+                {Math.round(monitor.brightness)}%
+              </Text>
+            )}
+          </Box>
+        </Box>
         <BrightnessBar
           value={monitor.brightness}
           color={accent}
           showValue={false}
         />
-      </Box>
-      <Box width={7} justifyContent="flex-end">
-        {editing ? (
-          <Text color="cyan" bold>
-            {editBuffer || " "}<Text color="cyan">|</Text>
-          </Text>
-        ) : (
-          <Text color={accent} bold>
-            {Math.round(monitor.brightness)}%
-          </Text>
-        )}
       </Box>
     </Box>
   )

@@ -17,14 +17,15 @@
   },
   "scripts": {
     "dev": "bun --watch src/index.tsx",
-    "build": "bun build src/index.tsx --outfile dist/index.js --target node --format esm --external '@types/react' --banner '#!/usr/bin/env node' && chmod +x dist/index.js",
+    "build": "bun build src/index.tsx --outdir dist --target node --format esm --external '@types/react' --splitting --banner '#!/usr/bin/env node' && chmod +x dist/index.js",
     "prepublishOnly": "bun run build",
     "lint": "biome check src/",
     "format": "biome check --write src/",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "ink": "^7.0.3",
+    "@opentui/core": "0.3.0",
+    "@opentui/react": "0.3.0",
     "react": "^19.2.6",
     "smol-toml": "^1.6.1"
   },
@@ -46,7 +47,6 @@
     "ddcutil",
     "monitor",
     "tui",
-    "ink",
     "waybar"
   ],
   "license": "MIT"

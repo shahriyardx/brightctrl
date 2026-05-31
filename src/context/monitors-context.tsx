@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react"
-import type { ReactNode } from "react"
+import type { Dispatch, ReactNode, SetStateAction } from "react"
 import type { Monitor } from "../ddcutil"
 import {
   checkDdcutil,
@@ -41,6 +41,9 @@ type MonitorsContextValue = {
   lastRefresh: string | null
   reload: () => void
   config: BrightCtrlConfig
+  typing: boolean
+  setTyping: Dispatch<SetStateAction<boolean>>
+  handleInputSubmit: (value: string) => void
 }
 
 const MonitorsContext = createContext<MonitorsContextValue | null>(null)
@@ -51,6 +54,7 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
   const [selected, setSelected] = useState(0)
   const [syncMode, setSyncModeState] = useState(config.syncMode)
   const [preciseMode, setPreciseModeState] = useState(config.preciseMode)
+  const [typing, setTyping] = useState(false)
 
   const setSyncMode = useCallback((n: boolean | ((n: boolean) => boolean)) => {
     setSyncModeState((prev) => {
@@ -171,8 +175,15 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
   )
 
   const reload = useCallback(() => load(true), [load])
-
   const persistTimer = useRef<NodeJS.Timeout | null>(null)
+
+  const handleInputSubmit = (value: string) => {
+    const b = Number.parseInt(value, 10)
+    if (Number.isNaN(b)) return
+
+    setExactBrightness(Math.max(0, Math.min(100, b)))
+    setTyping(false)
+  }
 
   useEffect(() => {
     const cached = readMonitorCache()
@@ -211,6 +222,9 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
     lastRefresh,
     reload,
     config,
+    typing,
+    setTyping,
+    handleInputSubmit,
   }
 
   return (

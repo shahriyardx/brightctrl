@@ -1,4 +1,4 @@
-import { Box, Text, measureElement, useStdout } from "ink"
+import { useOnResize } from "@opentui/react"
 import { useRef, useState, useEffect, useCallback } from "react"
 
 export function BrightnessBar({
@@ -12,41 +12,61 @@ export function BrightnessBar({
 }) {
   const ref = useRef<any>(null)
   const [barWidth, setBarWidth] = useState(0)
-  const { stdout } = useStdout()
 
   const measure = useCallback(() => {
-    if (ref.current) {
-      const { width } = measureElement(ref.current)
-      const labelWidth = showValue ? 5 : 0
-      setBarWidth(Math.max(0, width - labelWidth))
+    const box = ref.current
+    if (!box) return
+    const w = box.width ?? box.computedWidth ?? 0
+    if (w > 0) {
+      setBarWidth(Math.max(0, w - (showValue ? 5 : 0)))
     }
   }, [showValue])
 
   useEffect(() => {
-    measure()
-    stdout?.on("resize", measure)
-    return () => {
-      stdout?.off("resize", measure)
+    let attempts = 0
+    const poll = () => {
+      const box = ref.current
+      const w = box?.width ?? box?.computedWidth ?? 0
+      if (w > 0) {
+        measure()
+      } else if (attempts++ < 10) {
+        setTimeout(poll, 16)
+      }
     }
-  }, [measure, stdout])
+    setTimeout(poll, 0)
 
-  const filled = Math.round((value / 100) * barWidth)
+    const box = ref.current
+    if (box) {
+      const orig = box.onResize?.bind(box)
+      box.onResize = (w: number, h: number) => {
+        orig?.(w, h)
+        setBarWidth(Math.max(0, w - (showValue ? 5 : 0)))
+      }
+      return () => {
+        box.onResize = orig
+      }
+    }
+  }, [measure, showValue])
+
+  useOnResize(() => setTimeout(measure, 0))
+
+  const filled = barWidth > 0 ? Math.round((value / 100) * barWidth) : 0
   const empty = barWidth - filled
   const barColor =
     color ?? (value <= 20 ? "red" : value >= 90 ? "yellow" : "cyan")
 
   return (
-    <Box ref={ref} flexGrow={1}>
-      <Text color={barColor}>{filled > 0 ? "▰".repeat(filled) : ""}</Text>
-      <Text color="#444">{empty > 0 ? "▱".repeat(empty) : ""}</Text>
+    <box ref={ref} flexGrow={1} width={"100%"}>
+      <text>
+        <span fg={barColor}>{filled > 0 ? "▰".repeat(filled) : ""}</span>
+        <span fg="#444">{empty > 0 ? "▱".repeat(empty) : ""}</span>
+      </text>
       {showValue ? (
-        <>
-          <Text> </Text>
-          <Text color={barColor} bold>
-            {String(Math.round(value)).padStart(3)}%
-          </Text>
-        </>
+        <text fg={barColor}>
+          {" "}
+          <b>{String(Math.round(value)).padStart(3)}%</b>
+        </text>
       ) : null}
-    </Box>
+    </box>
   )
 }

@@ -1,6 +1,6 @@
-import { Box, Text } from "ink"
 import type { Monitor } from "../ddcutil"
 import { BrightnessBar } from "./brightness-bar"
+import { useMonitors } from "../context/monitors-context"
 
 export function MonitorCard({
   monitor,
@@ -8,8 +8,6 @@ export function MonitorCard({
   syncMode,
   position,
   alias,
-  editing,
-  editBuffer,
 }: {
   monitor: Monitor
   selected: boolean
@@ -19,59 +17,62 @@ export function MonitorCard({
   editing?: boolean
   editBuffer?: string
 }) {
+  const { typing, handleInputSubmit } = useMonitors()
   const accent = selected || syncMode ? "cyan" : "gray"
 
   return (
-    <Box
+    <box
       borderStyle="single"
       borderColor={accent}
-      paddingX={1}
-      paddingY={1}
+      paddingX={2}
       marginBottom={0}
+      flexDirection="row"
+      width={"100%"}
     >
-      <Box width={30}>
-        <Box width={4}>
-          <Text color={accent} bold>
-            {position}
-          </Text>
-        </Box>
-        <Box flexDirection="column">
-          <Box>
-            <Text color={accent} bold>
-              {monitor.name}
-            </Text>
-            {alias && (
-              <Text color="gray" dimColor>
-                {" "}
-                ({alias})
-              </Text>
-            )}
-          </Box>
-          <Text color="gray">{monitor.bus || `Display ${monitor.index}`}</Text>
-        </Box>
-      </Box>
-      <Box flexDirection="column" flexGrow={1}>
-        <Box justifyContent="space-between">
-          <Text color={accent}>BRIGHTNESS</Text>
-          <Box width={7} justifyContent="flex-end">
-            {editing ? (
-              <Text color="cyan" bold>
-                {editBuffer || " "}
-                <Text color="cyan">|</Text>
-              </Text>
-            ) : (
-              <Text color={accent} bold>
-                {Math.round(monitor.brightness)}%
-              </Text>
-            )}
-          </Box>
-        </Box>
+      <box
+        flexDirection="column"
+        justifyContent="space-between"
+        gap={1}
+        width={"50%"}
+      >
+        <box flexDirection="column">
+          <box flexDirection="row" gap={1}>
+            <text fg={accent}>
+              <b>{monitor.name}</b>
+            </text>
+
+            {alias && <text fg="gray">({alias})</text>}
+          </box>
+          <text fg="gray">
+            {monitor.bus
+              ? `Bus: ${monitor.bus}`
+              : `ID: ${monitor.id || "Unknown"}`}
+          </text>
+        </box>
+      </box>
+
+      <box flexDirection="column" width={"50%"} alignItems="flex-end">
+        <box>
+          {typing && selected && !syncMode ? (
+            <input
+              width={20}
+              placeholder="Enter Brightness..."
+              onSubmit={(v) => handleInputSubmit(String(v))}
+              focused
+            />
+          ) : (
+            <text fg={accent}>
+              <b>{Math.round(monitor.brightness)}%</b>
+            </text>
+          )}
+        </box>
+
         <BrightnessBar
           value={monitor.brightness}
           color={accent}
           showValue={false}
         />
-      </Box>
-    </Box>
+      </box>
+    </box>
   )
 }

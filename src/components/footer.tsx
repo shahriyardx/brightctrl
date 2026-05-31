@@ -1,18 +1,16 @@
-import { Box, Text } from "ink"
-
 const Footer = () => {
   return (
-    <Box gap={2} marginTop={2}>
-      <Box>
-        <Text color="gray">Config: </Text>
-        <Text color="cyan">~/.config/brightctrl/config.toml</Text>
-      </Box>
+    <box gap={2} marginTop={2}>
+      <box>
+        <text fg="gray">Config: </text>
+        <text fg="cyan">~/.config/brightctrl/config.toml</text>
+      </box>
 
-      <Box>
-        <Text color="gray">Docs: </Text>
-        <Text color="cyan">github.com/shahriyardx/brightctrl</Text>
-      </Box>
-    </Box>
+      <box>
+        <text fg="gray">Docs: </text>
+        <text fg="cyan">github.com/shahriyardx/brightctrl</text>
+      </box>
+    </box>
   )
 }
 

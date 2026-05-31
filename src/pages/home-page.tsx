@@ -1,5 +1,4 @@
-import { Box, Text, useApp, useInput } from "ink"
-import { useState } from "react"
+import { useKeyboard, useRenderer } from "@opentui/react"
 import { ErrorPanel } from "../components/error-panel"
 import { MonitorCard } from "../components/monitor-card"
 import { MonitorsTitle } from "../components/monitors-title"
@@ -9,7 +8,7 @@ import Header from "../components/header"
 import { usePlatform } from "../hooks/use-platform"
 
 export function HomePage() {
-  const { exit } = useApp()
+  const renderer = useRenderer()
   const { goHelp } = useNavigation()
   const {
     monitors,
@@ -26,58 +25,54 @@ export function HomePage() {
     loading,
     reload,
     config,
+    setTyping,
+    typing,
+    handleInputSubmit,
   } = useMonitors()
   const { os, isSupported } = usePlatform()
-  const [inputMode, setInputMode] = useState(false)
-  const [editBuffer, setEditBuffer] = useState("")
 
-  useInput((input, key) => {
-    if (inputMode) {
-      if (key.return) {
-        const val = Number.parseInt(editBuffer, 10)
-        if (!Number.isNaN(val)) {
-          setExactBrightness(Math.max(0, Math.min(100, val)))
-        }
-        setInputMode(false)
-        setEditBuffer("")
-      } else if (key.escape || input === "/") {
-        setInputMode(false)
-        setEditBuffer("")
-      } else if (key.backspace || key.delete) {
-        setEditBuffer((s) => s.slice(0, -1))
-      } else if (/^[0-9]$/.test(input) && editBuffer.length < 3) {
-        setEditBuffer((s) => s + input)
+  useKeyboard((key) => {
+    if (typing) {
+      if (key.name === "escape" || key.name === "/") {
+        setTyping(false)
       }
       return
     }
 
-    if (input === "q") exit()
-
-    if (input === "?") {
+    if (key.name === "q") renderer.destroy()
+    if (key.name === "?") {
       goHelp()
-    } else if (input === "/") {
+    } else if (key.name === "/") {
       if (monitors.length > 0) {
-        setInputMode(true)
-        setEditBuffer("")
+        setTyping(true)
       }
-    } else if (/^[1-9]$/.test(input)) {
-      const next = Number.parseInt(input, 10) - 1
+    } else if (/^[1-9]$/.test(key.name)) {
+      const next = Number.parseInt(key.name, 10) - 1
       setSelected(Math.max(0, Math.min(monitors.length - 1, next)))
-    } else if (key.upArrow || input === "k") {
+    } else if (key.name === "up" || key.name === "k") {
       setSelected((s) => Math.max(0, s - 1))
-    } else if (key.downArrow || input === "j") {
+      setTyping(false)
+    } else if (key.name === "down" || key.name === "j") {
+      setTyping(false)
       setSelected((s) => Math.max(0, Math.min(monitors.length - 1, s + 1)))
-    } else if (input === "h" || key.leftArrow) {
+    } else if (key.name === "h" || key.name === "left") {
       adjustBrightness(-step)
-    } else if (input === "l" || key.rightArrow) {
+    } else if (key.name === "l" || key.name === "right") {
       adjustBrightness(step)
-    } else if (input === "p") {
+    } else if (key.name === "p") {
       setPreciseMode((s) => !s)
-    } else if (input === "s") {
-      setSyncMode((s) => !s)
-    } else if (input === "r") {
+    } else if (key.name === "s") {
+      setSyncMode((s) => {
+        if (s) {
+          setSelected(0)
+        } else {
+          setSelected(-1)
+        }
+        return !s
+      })
+    } else if (key.name === "r") {
       reload()
-    } else if (input === "m") {
+    } else if (key.name === "m") {
       setExactBrightness(0)
     }
   })
@@ -85,33 +80,43 @@ export function HomePage() {
   return (
     <>
       <Header />
-      <Box flexDirection="column" paddingX={2}>
+      <box flexDirection="column" paddingX={2}>
         {isSupported ? (
-          <Box flexDirection="column">
+          <box flexDirection="column">
             <MonitorsTitle />
 
-            <Box flexDirection="column">
+            {typing && syncMode && (
+              <box borderStyle="single" borderColor="#29313a">
+                <input
+                  placeholder="Enter brightness 0-100"
+                  focused
+                  onSubmit={(e) => handleInputSubmit(String(e))}
+                />
+              </box>
+            )}
+
+            <box flexDirection="column">
               {loading && monitors.length === 0 ? (
-                <Box borderStyle="single" borderColor="#29313a">
-                  <Text color="gray">{status}...</Text>
-                </Box>
+                <box borderStyle="single" borderColor="#29313a">
+                  <text fg="gray">{status}...</text>
+                </box>
               ) : error && monitors.length === 0 ? (
-                <Box flexDirection="column">
-                  <Box borderStyle="single" borderColor="red">
-                    <Text color="red">{error}</Text>
-                  </Box>
+                <box flexDirection="column">
+                  <box borderStyle="single" borderColor="red">
+                    <text fg="red">{error}</text>
+                  </box>
                   <ErrorPanel />
-                </Box>
+                </box>
               ) : (
                 <>
                   {error && (
-                    <Box
+                    <box
                       borderStyle="single"
                       borderColor="red"
                       marginBottom={1}
                     >
-                      <Text color="red">{error}</Text>
-                    </Box>
+                      <text fg="red">{error}</text>
+                    </box>
                   )}
                   {monitors.map((m, i) => (
                     <MonitorCard
@@ -121,22 +126,20 @@ export function HomePage() {
                       syncMode={syncMode}
                       position={i + 1}
                       alias={config.aliases[m.id]}
-                      editing={inputMode && i === selected}
-                      editBuffer={editBuffer}
                     />
                   ))}
                 </>
               )}
-            </Box>
-          </Box>
+            </box>
+          </box>
         ) : (
-          <Box flexDirection="column">
-            <Box borderStyle="single" borderColor="red" paddingX={1}>
-              <Text color="red">{os} is not yet supported</Text>
-            </Box>
-          </Box>
+          <box flexDirection="column">
+            <box borderStyle="single" borderColor="red" paddingX={1}>
+              <text fg="red">{os} is not yet supported</text>
+            </box>
+          </box>
         )}
-      </Box>
+      </box>
     </>
   )
 }

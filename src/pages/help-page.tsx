@@ -11,7 +11,11 @@ export function HelpPage() {
   useKeyboard((key) => {
     if (key.name === "q") {
       renderer.destroy()
-    } else if (key.name === "?" || key.name === "escape" || key.name === "return") {
+    } else if (
+      key.name === "?" ||
+      key.name === "escape" ||
+      key.name === "return"
+    ) {
       goHome()
     }
   })
@@ -26,8 +30,8 @@ export function HelpPage() {
               <b>CONTROLS</b>
             </text>
           </box>
-          <box>
-            <box flexDirection="column" width={42}>
+          <box flexDirection="row" justifyContent="space-between">
+            <box flexDirection="column" width={"50%"}>
               <ControlRow keys="↑ / k" label="Select previous monitor" />
               <ControlRow keys="↓ / j" label="Select next monitor" />
               <ControlRow keys="← / h" label="Decrease brightness" />
@@ -35,8 +39,7 @@ export function HelpPage() {
               <ControlRow keys="1 - 9" label="Select monitor by number" />
               <ControlRow keys="/" label="Enter brightness value (0-100)" />
             </box>
-            <text fg="#29313a">│ </text>
-            <box flexDirection="column" marginLeft={2}>
+            <box flexDirection="column" width={"50%"}>
               <ControlRow keys="p" label="Toggle precise mode" />
               <ControlRow keys="s" label="Sync all monitors" />
               <ControlRow keys="r" label="Refresh monitor list" />

@@ -6,7 +6,12 @@ export default function App() {
   const { page } = useNavigation()
 
   return (
-    <box flexDirection="column" borderColor="cyan" width="100%">
+    <box
+      flexDirection="column"
+      borderColor="gray"
+      borderStyle="double"
+      width="100%"
+    >
       {page === "help" ? <HelpPage /> : <HomePage />}
     </box>
   )

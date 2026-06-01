@@ -101,10 +101,19 @@ export function MonitorsProvider({ children }: { children: ReactNode }) {
     if (monitors.length === 0) return
     const idx = selected
 
+    const startingBrightness = syncMode
+      ? delta < 0
+        ? Math.min(...monitors.map((monitor) => monitor.brightness))
+        : Math.max(...monitors.map((monitor) => monitor.brightness))
+      : monitors[idx].brightness
+
     setMonitors((prev) =>
       prev.map((m, i) => {
         if (!syncMode && i !== idx) return m
-        const v = Math.max(0, Math.min(100, m.brightness + delta))
+        const v = Math.max(
+          0,
+          Math.min(100, (syncMode ? startingBrightness : m.brightness) + delta),
+        )
         scheduleBrightness(m.index, v)
         return { ...m, brightness: v }
       }),

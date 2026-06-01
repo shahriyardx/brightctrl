@@ -18,17 +18,20 @@ export function MonitorCard({
   editBuffer?: string
 }) {
   const { typing, handleInputSubmit } = useMonitors()
-  const accent = selected || syncMode ? "cyan" : "gray"
+  const sel = selected || syncMode
+  const accent = sel ? "cyan" : "gray"
 
   return (
     <box
       borderStyle="single"
-      borderColor={accent}
+      borderColor={sel ? "cyan" : "gray"}
       paddingX={2}
       marginBottom={0}
       flexDirection="row"
       width={"100%"}
+      gap={1}
     >
+      <text fg={selected ? "cyan" : "gray"}>{position}</text>
       <box
         flexDirection="column"
         justifyContent="space-between"
@@ -67,11 +70,7 @@ export function MonitorCard({
           )}
         </box>
 
-        <BrightnessBar
-          value={monitor.brightness}
-          color={accent}
-          showValue={false}
-        />
+        <BrightnessBar value={monitor.brightness} selected={sel} />
       </box>
     </box>
   )

@@ -8,21 +8,14 @@ arch=("x86_64")
 url="https://github.com/shahriyardx/brightctrl"
 license=("MIT")
 depends=()
-makedepends=("cargo")
-source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=("SKIP")
-
-build() {
-  cd "$pkgname-$pkgver"
-  export RUSTUP_TOOLCHAIN=stable
-  export CARGO_TARGET_DIR=target
-  cargo build --release
-}
+source=("brightctrl-$pkgver::$url/releases/download/v$pkgver/brightctrl"
+        "LICENSE-$pkgver::$url/raw/v$pkgver/LICENSE")
+sha256sums=("SKIP"
+            "SKIP")
 
 package() {
-  cd "$pkgname-$pkgver"
-  install -Dm755 "target/release/brightctrl" "$pkgdir/usr/bin/brightctrl"
+  install -Dm755 "$srcdir/brightctrl-$pkgver" "$pkgdir/usr/bin/brightctrl"
   ln -s brightctrl "$pkgdir/usr/bin/bctrl"
   ln -s brightctrl "$pkgdir/usr/bin/bc"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$srcdir/LICENSE-$pkgver" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

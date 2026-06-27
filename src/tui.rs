@@ -16,14 +16,18 @@ use ratatui::crossterm::execute;
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Padding, Paragraph};
+use ratatui::widgets::{Block, BorderType, Padding, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 
 use crate::config::Config;
 use crate::ddc::{self, Monitor};
 
 const SPINNER: [&str; 10] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-const HEADER_BG: Color = Color::Rgb(21, 25, 37);
+const RULE: Color = Color::Rgb(41, 49, 58); // separators
+const KEYCAP_BG: Color = Color::Rgb(40, 46, 58); // footer key boxes
+const CARD_BORDER: Color = Color::Rgb(88, 100, 118); // unselected card frame
+const PILL_ON_BG: Color = Color::Rgb(46, 160, 90); // active toggle button
+const PILL_OFF_FG: Color = Color::Rgb(150, 160, 175); // inactive toggle text
 const WRITE_DEBOUNCE: Duration = Duration::from_millis(120);
 const WRITE_THROTTLE: Duration = Duration::from_millis(100);
 
@@ -347,10 +351,11 @@ impl App {
             KeyCode::Down | KeyCode::Char('j') => self.selected = (self.selected + 1).min(last),
             KeyCode::Left | KeyCode::Char('h') => self.adjust(-step),
             KeyCode::Right | KeyCode::Char('l') => self.adjust(step),
-            KeyCode::Char('p') => self.toggle_precise(),
-            KeyCode::Char('s') => self.toggle_sync(),
+            KeyCode::Char('p') | KeyCode::Char('P') => self.toggle_precise(),
+            KeyCode::Char('s') | KeyCode::Char('S') => self.toggle_sync(),
             KeyCode::Char('r') => self.spawn_detect(),
-            KeyCode::Char('m') => self.set_exact(0),
+            KeyCode::Char('g') | KeyCode::Char('G') => self.set_exact(100),
+            KeyCode::Char('0') | KeyCode::Char('m') => self.set_exact(0),
             _ => {}
         }
     }
@@ -416,42 +421,54 @@ fn ui(f: &mut Frame, app: &App) {
     app.hits.borrow_mut().clear();
     app.controls.borrow_mut().clear();
     let area = f.area();
-    let outer = Block::bordered().border_style(Style::new().fg(Color::Cyan));
-    let inner = outer.inner(area);
-    f.render_widget(outer, area);
 
-    let chunks = Layout::vertical([Constraint::Length(5), Constraint::Min(0)]).split(inner);
+    let chunks = Layout::vertical([
+        Constraint::Length(4), // header + rule
+        Constraint::Min(0),    // body
+        Constraint::Length(2), // footer rule + key hints
+    ])
+    .split(area);
+
     render_header(f, chunks[0]);
     match app.page {
         Page::Home => render_home(f, chunks[1], app),
         Page::Help => render_help(f, chunks[1]),
     }
+    render_footer(f, chunks[2], app);
+}
+
+/// A horizontal rule across `area`'s top row.
+fn rule(f: &mut Frame, area: Rect) {
+    let line = "─".repeat(area.width as usize);
+    f.render_widget(
+        Paragraph::new(Line::from(Span::styled(line, Style::new().fg(RULE)))),
+        Rect::new(area.x, area.y, area.width, 1),
+    );
 }
 
 fn render_header(f: &mut Frame, area: Rect) {
-    let block = Block::default()
-        .style(Style::new().bg(HEADER_BG))
-        .padding(Padding::new(2, 1, 1, 0));
-    let inner = block.inner(area);
-    f.render_widget(block, area);
+    let pad = Rect::new(
+        area.x + 2,
+        area.y + 1,
+        area.width.saturating_sub(4),
+        2.min(area.height),
+    );
 
-    // Left text and the right-aligned help hint share the same area; their
-    // content never overlaps, so the hint sits flush against the right edge.
+    // Title with inline version, and a subtitle below.
     let left = Paragraph::new(vec![
-        Line::from(Span::styled(
-            "brightctrl",
-            Style::new().fg(Color::Green).bold(),
-        )),
+        Line::from(vec![
+            Span::styled("brightctrl", Style::new().fg(Color::Green).bold()),
+            Span::styled(
+                format!("  v{}", env!("CARGO_PKG_VERSION")),
+                Style::new().fg(Color::DarkGray),
+            ),
+        ]),
         Line::from(Span::styled(
             "External monitor brightness control",
-            Style::new().fg(Color::White),
-        )),
-        Line::from(Span::styled(
-            format!("v{}", env!("CARGO_PKG_VERSION")),
             Style::new().fg(Color::Gray),
         )),
     ]);
-    f.render_widget(left, inner);
+    f.render_widget(left, pad);
 
     let right = Paragraph::new(Line::from(vec![
         Span::styled("Press ", Style::new().fg(Color::Gray)),
@@ -459,7 +476,10 @@ fn render_header(f: &mut Frame, area: Rect) {
         Span::styled(" for help", Style::new().fg(Color::Gray)),
     ]))
     .alignment(Alignment::Right);
-    f.render_widget(right, inner);
+    f.render_widget(right, pad);
+
+    // Separator rule along the bottom row of the header.
+    rule(f, Rect::new(area.x, area.bottom().saturating_sub(1), area.width, 1));
 }
 
 fn render_home(f: &mut Frame, area: Rect, app: &App) {
@@ -470,12 +490,11 @@ fn render_home(f: &mut Frame, area: Rect, app: &App) {
     let rows = Layout::vertical([
         Constraint::Length(1), // gap above the MONITORS title
         Constraint::Length(1), // title
-        Constraint::Length(1), // gap below the title
         Constraint::Min(0),    // monitor cards
     ])
     .split(area);
     render_title(f, rows[1], app);
-    let body = rows[3];
+    let body = rows[2];
 
     if app.monitors.is_empty() {
         if app.loading {
@@ -493,22 +512,22 @@ fn render_home(f: &mut Frame, area: Rect, app: &App) {
 
     // Sync mode collapses the list into one card showing the average.
     if app.sync_mode {
-        render_synced_card(f, Rect::new(body.x, body.y, body.width, 4), app);
+        render_synced_card(f, Rect::new(body.x, body.y, body.width, 5), app);
         return;
     }
 
     let mut y = body.y;
     for (i, m) in app.monitors.iter().enumerate() {
-        if y + 4 > body.bottom() {
+        if y + 5 > body.bottom() {
             break;
         }
-        render_card(f, Rect::new(body.x, y, body.width, 4), m, i, app);
-        y += 4;
+        render_card(f, Rect::new(body.x, y, body.width, 5), m, i, app);
+        y += 5; // cards touch, no gap
     }
 }
 
 fn render_title(f: &mut Frame, area: Rect, app: &App) {
-    let cols = Layout::horizontal([Constraint::Min(0), Constraint::Length(26)]).split(area);
+    let cols = Layout::horizontal([Constraint::Min(0), Constraint::Length(38)]).split(area);
 
     let mut left = Vec::new();
     if app.loading {
@@ -520,102 +539,176 @@ fn render_title(f: &mut Frame, area: Rect, app: &App) {
     left.push(Span::styled("MONITORS", Style::new().fg(Color::Cyan).bold()));
     f.render_widget(Paragraph::new(Line::from(left)), cols[0]);
 
-    let pill = |label: &str, key: &str, on: bool| -> Vec<Span<'static>> {
-        let bg = if on { Color::Green } else { Color::Gray };
+    // Filled toggle buttons: green when on, muted slate when off.
+    let pill = |key: &str, label: &str, on: bool| -> Vec<Span<'static>> {
+        let (bg, fg) = if on {
+            (PILL_ON_BG, Color::Black)
+        } else {
+            (KEYCAP_BG, PILL_OFF_FG)
+        };
+        let state = if on { "ON" } else { "OFF" };
+        let base = Style::new().bg(bg).fg(fg);
         vec![
-            Span::styled(format!(" {label}"), Style::new().bg(bg).fg(Color::Black)),
-            Span::styled(format!(" ({key}) "), Style::new().bg(bg).fg(Color::Black)),
+            Span::styled(format!(" [{key}] {label}: "), base),
+            Span::styled(format!("{state} "), base.bold()),
         ]
     };
-    let sync = pill("Sync", "s", app.sync_mode);
-    let precise = pill("Precise", "p", app.precise_mode);
+    let sync = pill("S", "Sync", app.sync_mode);
+    let precise = pill("P", "Precise", app.precise_mode);
     let sync_w: u16 = sync.iter().map(|s| s.content.chars().count() as u16).sum();
     let precise_w: u16 = precise.iter().map(|s| s.content.chars().count() as u16).sum();
-    let total = sync_w + 1 + precise_w;
+    let total = sync_w + 2 + precise_w;
 
     let mut pills = sync;
-    pills.push(Span::raw(" "));
+    pills.push(Span::raw("  "));
     pills.extend(precise);
     f.render_widget(
         Paragraph::new(Line::from(pills)).alignment(Alignment::Right),
         cols[1],
     );
 
-    // Record the on-screen rects so the pills are clickable. Right-aligned, so
-    // they end at the column's right edge.
     let start = cols[1].x + cols[1].width.saturating_sub(total);
     let sync_rect = Rect::new(start, cols[1].y, sync_w, 1);
-    let precise_rect = Rect::new(start + sync_w + 1, cols[1].y, precise_w, 1);
+    let precise_rect = Rect::new(start + sync_w + 2, cols[1].y, precise_w, 1);
     let mut controls = app.controls.borrow_mut();
     controls.push((Control::Sync, sync_rect));
     controls.push((Control::Precise, precise_rect));
 }
 
-fn render_card(f: &mut Frame, area: Rect, m: &Monitor, i: usize, app: &App) {
-    let accent = if app.selected == i || app.sync_mode {
-        Color::Cyan
-    } else {
-        Color::Gray
-    };
+/// Build a segmented brightness bar (filled vs empty blocks) sized to `width`.
+fn segmented_bar(value: u16, width: u16, accent: Color) -> Line<'static> {
+    let segs = (width.max(1)) as usize;
+    let filled = (value as usize * segs + 50) / 100;
+    let mut spans = Vec::with_capacity(segs);
+    for s in 0..segs {
+        let (glyph, c) = if s < filled {
+            ("▰", accent)
+        } else {
+            ("▱", RULE)
+        };
+        spans.push(Span::styled(glyph, Style::new().fg(c)));
+    }
+    Line::from(spans)
+}
+
+/// Draw a rounded card frame. Returns the horizontally-padded content rect.
+fn render_card_frame(f: &mut Frame, area: Rect, border: Color) -> Rect {
     let block = Block::bordered()
-        .border_style(Style::new().fg(accent))
-        .padding(Padding::horizontal(1));
-    let inner = block.inner(area);
+        .border_type(BorderType::Rounded)
+        .border_style(Style::new().fg(border));
+    let interior = block.inner(area);
     f.render_widget(block, area);
+    Rect::new(
+        interior.x + 1,
+        interior.y,
+        interior.width.saturating_sub(2),
+        interior.height,
+    )
+}
 
-    let cols = Layout::horizontal([Constraint::Length(30), Constraint::Min(0)]).split(inner);
+/// Lay out a card's interior: boxed number, name/bus, brightness bar, value +
+/// chevron. Shared by per-monitor and synced cards. Returns the bar's rect.
+fn render_card_body(
+    f: &mut Frame,
+    inner: Rect,
+    accent: Color,
+    name: String,
+    sub: String,
+    alias: Option<&String>,
+    value: String,
+) -> Rect {
+    let cols = Layout::horizontal([
+        Constraint::Length(26), // name + sub
+        Constraint::Min(0),     // brightness label + bar
+        Constraint::Length(8),  // value
+    ])
+    .split(inner);
 
-    // Left: number + name + (alias), then bus.
-    let mut name_line = vec![
-        Span::styled(format!("{:<3} ", m.index), Style::new().fg(accent).bold()),
-        Span::styled(m.name.clone(), Style::new().fg(accent).bold()),
-    ];
-    if let Some(alias) = app.config.alias_of(&m.id) {
+    // Name + sub line (bus or "N synced"), vertically centered in 3 rows.
+    let mut name_line = vec![Span::styled(name, Style::new().fg(accent).bold())];
+    if let Some(a) = alias {
         name_line.push(Span::styled(
-            format!(" ({alias})"),
+            format!(" ({a})"),
             Style::new().fg(Color::DarkGray),
         ));
     }
-    let left = Paragraph::new(vec![
-        Line::from(name_line),
-        Line::from(Span::styled(
-            format!("    {}", m.bus),
-            Style::new().fg(Color::Gray),
-        )),
-    ]);
-    f.render_widget(left, cols[0]);
+    f.render_widget(
+        Paragraph::new(vec![
+            Line::from(name_line),
+            Line::from(Span::styled(sub, Style::new().fg(Color::Gray))),
+        ]),
+        Rect::new(cols[0].x, cols[0].y, cols[0].width, 2),
+    );
 
-    // Right: BRIGHTNESS label + value, then the bar.
-    let rw = cols[1].width as usize;
-    let editing = app.input_mode && app.selected == i;
+    // BRIGHTNESS label (top row) + segmented bar (middle row).
+    let mid = cols[1];
+    f.render_widget(
+        Paragraph::new(Line::from(Span::styled(
+            "BRIGHTNESS",
+            Style::new().fg(Color::Gray),
+        ))),
+        Rect::new(mid.x, mid.y, mid.width, 1),
+    );
+    let bar_rect = Rect::new(mid.x, mid.y + 1, mid.width, 1);
+    f.render_widget(
+        Paragraph::new(segmented_bar_or_text(&value, mid.width, accent)),
+        bar_rect,
+    );
+
+    // Value, vertically centered.
+    f.render_widget(
+        Paragraph::new(Line::from(Span::styled(
+            value,
+            Style::new().fg(accent).bold(),
+        )))
+        .alignment(Alignment::Right),
+        Rect::new(cols[2].x, cols[2].y + 1, cols[2].width, 1),
+    );
+
+    bar_rect
+}
+
+/// The bar uses the numeric brightness; `value` carries the "%"/edit string only
+/// for the chevron readout, so re-parse the leading number for the bar fill.
+fn segmented_bar_or_text(value: &str, width: u16, accent: Color) -> Line<'static> {
+    let n: u16 = value
+        .trim_end_matches('%')
+        .trim_end_matches('|')
+        .parse()
+        .unwrap_or(0);
+    segmented_bar(n, width, accent)
+}
+
+fn render_card(f: &mut Frame, area: Rect, m: &Monitor, i: usize, app: &App) {
+    let selected = app.selected == i;
+    let accent = if selected { Color::Cyan } else { Color::Gray };
+
+    // Every card has a full rounded frame; selected is cyan, others a brighter
+    // neutral gray.
+    let border = if selected { accent } else { CARD_BORDER };
+    let inner = render_card_frame(f, area, border);
+
+    let editing = app.input_mode && selected;
     let value = if editing {
         format!("{}|", app.edit_buffer)
     } else {
         format!("{}%", m.brightness)
     };
-    let label = "BRIGHTNESS";
-    let pad = rw.saturating_sub(label.len() + value.chars().count());
-    let top = Line::from(vec![
-        Span::styled(label, Style::new().fg(accent)),
-        Span::raw(" ".repeat(pad)),
-        Span::styled(value, Style::new().fg(accent).bold()),
-    ]);
 
-    let filled = m.brightness as usize * rw / 100;
-    let empty = rw.saturating_sub(filled);
-    let bar = Line::from(vec![
-        Span::styled("▰".repeat(filled), Style::new().fg(accent)),
-        Span::styled("▱".repeat(empty), Style::new().fg(Color::DarkGray)),
-    ]);
-    f.render_widget(Paragraph::new(vec![top, bar]), cols[1]);
+    let bar = render_card_body(
+        f,
+        inner,
+        accent,
+        m.name.clone(),
+        m.bus.clone(),
+        app.config.alias_of(&m.id),
+        value,
+    );
 
-    // Record clickable regions: the whole card (select/scroll) and the bar
-    // row (drag to set). The bar is the second line of the right column.
-    let bar_rect = Rect::new(cols[1].x, cols[1].y + 1, cols[1].width, 1);
     app.hits.borrow_mut().push(CardHit {
         index: i,
         card: area,
-        bar: bar_rect,
+        bar,
     });
 }
 
@@ -629,52 +722,65 @@ fn render_synced_card(f: &mut Frame, area: Rect, app: &App) {
         (app.monitors.iter().map(|m| m.brightness as u32).sum::<u32>() / n as u32) as u16
     };
 
-    let block = Block::bordered()
-        .border_style(Style::new().fg(accent))
-        .padding(Padding::horizontal(1));
-    let inner = block.inner(area);
-    f.render_widget(block, area);
+    let inner = render_card_frame(f, area, accent);
 
-    let cols = Layout::horizontal([Constraint::Length(30), Constraint::Min(0)]).split(inner);
-
-    let left = Paragraph::new(vec![
-        Line::from(Span::styled("All Monitors", Style::new().fg(accent).bold())),
-        Line::from(Span::styled(
-            format!("{n} synced"),
-            Style::new().fg(Color::Gray),
-        )),
-    ]);
-    f.render_widget(left, cols[0]);
-
-    let rw = cols[1].width as usize;
     let value = if app.input_mode {
         format!("{}|", app.edit_buffer)
     } else {
         format!("{avg}%")
     };
-    let label = "BRIGHTNESS";
-    let pad = rw.saturating_sub(label.len() + value.chars().count());
-    let top = Line::from(vec![
-        Span::styled(label, Style::new().fg(accent)),
-        Span::raw(" ".repeat(pad)),
-        Span::styled(value, Style::new().fg(accent).bold()),
-    ]);
 
-    let filled = avg as usize * rw / 100;
-    let empty = rw.saturating_sub(filled);
-    let bar = Line::from(vec![
-        Span::styled("▰".repeat(filled), Style::new().fg(accent)),
-        Span::styled("▱".repeat(empty), Style::new().fg(Color::DarkGray)),
-    ]);
-    f.render_widget(Paragraph::new(vec![top, bar]), cols[1]);
+    let bar = render_card_body(
+        f,
+        inner,
+        accent,
+        "All Monitors".to_string(),
+        format!("{n} synced"),
+        None,
+        value,
+    );
 
     // Index 0 is fine: in sync mode set/adjust apply to every monitor.
-    let bar_rect = Rect::new(cols[1].x, cols[1].y + 1, cols[1].width, 1);
     app.hits.borrow_mut().push(CardHit {
         index: 0,
         card: area,
-        bar: bar_rect,
+        bar,
     });
+}
+
+fn render_footer(f: &mut Frame, area: Rect, app: &App) {
+    rule(f, area);
+
+    let hints: &[(&str, &str)] = if app.page == Page::Help {
+        &[("?", "Back"), ("q", "Quit")]
+    } else {
+        &[
+            ("↑↓", "Select"),
+            ("←→", "Adjust"),
+            ("g", "100%"),
+            ("0", "0%"),
+            ("S", "Sync"),
+            ("P", "Precise"),
+            ("r", "Refresh"),
+            ("q", "Quit"),
+        ]
+    };
+
+    let mut spans = Vec::new();
+    for (key, label) in hints {
+        spans.push(Span::styled(
+            format!(" {key} "),
+            Style::new().bg(KEYCAP_BG).fg(Color::White).bold(),
+        ));
+        spans.push(Span::styled(
+            format!(" {label}   "),
+            Style::new().fg(Color::Gray),
+        ));
+    }
+    f.render_widget(
+        Paragraph::new(Line::from(spans)),
+        Rect::new(area.x + 2, area.y + 1, area.width.saturating_sub(2), 1),
+    );
 }
 
 fn render_error(f: &mut Frame, area: Rect, err: &str) {
@@ -705,65 +811,85 @@ fn render_error(f: &mut Frame, area: Rect, err: &str) {
     );
 }
 
+/// A key cap ("▕ g ▏"-ish filled box) followed by its description.
+fn keycap(key: &str, label: &str) -> Line<'static> {
+    Line::from(vec![
+        Span::styled(
+            format!(" {key} "),
+            Style::new().bg(KEYCAP_BG).fg(Color::White).bold(),
+        ),
+        Span::styled(format!("  {label}"), Style::new().fg(Color::Gray)),
+    ])
+}
+
+/// A dim section header inside the help card.
+fn section(title: &str) -> Line<'static> {
+    Line::from(Span::styled(
+        title.to_string(),
+        Style::new().fg(Color::Cyan).bold(),
+    ))
+}
+
 fn render_help(f: &mut Frame, area: Rect) {
-    let block = Block::default().padding(Padding::new(2, 2, 1, 0));
-    let inner = block.inner(area);
+    let block = Block::default().padding(Padding::horizontal(2));
+    let area = block.inner(area);
     f.render_widget(block, area);
 
-    let row = |keys: &str, label: &str| -> Line<'static> {
-        Line::from(vec![
-            Span::styled(format!("{:<8}", keys), Style::new().fg(Color::Yellow)),
-            Span::styled(label.to_string(), Style::new().fg(Color::Gray)),
-        ])
-    };
-
-    let left = vec![
-        row("↑ / k", "Select previous monitor"),
-        row("↓ / j", "Select next monitor"),
-        row("← / h", "Decrease brightness"),
-        row("→ / l", "Increase brightness"),
-        row("1 - 9", "Select monitor by number"),
-        row("/", "Enter exact brightness (0-100)"),
-        row("mouse", "Drag bar to set, scroll to adjust"),
-    ];
-    let right = vec![
-        row("p", "Toggle precise mode (1% steps)"),
-        row("s", "Sync all monitors"),
-        row("m", "Set brightness to 0"),
-        row("r", "Refresh monitor list"),
-        row("?", "Return home"),
-        row("q", "Quit"),
-    ];
-
-    // CONTROLS title, blank, two columns, blank, config footer.
     let rows = Layout::vertical([
-        Constraint::Length(1),                          // CONTROLS
-        Constraint::Length(1),                          // gap
-        Constraint::Length(left.len().max(right.len()) as u16), // columns
-        Constraint::Length(1),                          // gap
-        Constraint::Length(1),                          // config
-        Constraint::Min(0),
+        Constraint::Length(1), // gap
+        Constraint::Length(1), // CONTROLS title
+        Constraint::Length(1), // gap
+        Constraint::Min(0),    // framed card
+        Constraint::Length(1), // config path
     ])
-    .split(inner);
+    .split(area);
 
     f.render_widget(
         Paragraph::new(Line::from(Span::styled(
             "CONTROLS",
             Style::new().fg(Color::Cyan).bold(),
         ))),
-        rows[0],
+        rows[1],
     );
 
-    let cols = Layout::horizontal([Constraint::Length(42), Constraint::Min(0)]).split(rows[2]);
-    f.render_widget(Paragraph::new(left), cols[0]);
-    f.render_widget(Paragraph::new(right), cols[1]);
+    let inner = render_card_frame(f, rows[3], CARD_BORDER);
+    let cols =
+        Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]).split(inner);
+
+    let left = vec![
+        section("NAVIGATION"),
+        Line::from(""),
+        keycap("↑ ↓", "Select monitor"),
+        keycap("← →", "Adjust brightness"),
+        keycap("1-9", "Select by number"),
+        keycap(" / ", "Enter exact value"),
+        keycap("mouse", "Drag bar / scroll / click"),
+    ];
+    let right = vec![
+        section("ACTIONS"),
+        Line::from(""),
+        keycap(" g ", "Set to 100%"),
+        keycap(" 0 ", "Set to 0%"),
+        keycap(" s ", "Toggle sync"),
+        keycap(" p ", "Toggle precise (1% steps)"),
+        keycap(" r ", "Refresh monitors"),
+        keycap(" q ", "Quit"),
+    ];
+    f.render_widget(
+        Paragraph::new(left),
+        Rect::new(cols[0].x + 1, cols[0].y, cols[0].width.saturating_sub(1), cols[0].height),
+    );
+    f.render_widget(
+        Paragraph::new(right),
+        Rect::new(cols[1].x, cols[1].y, cols[1].width, cols[1].height),
+    );
 
     f.render_widget(
         Paragraph::new(Line::from(vec![
-            Span::styled("Config: ", Style::new().fg(Color::Gray)),
+            Span::styled("Config  ", Style::new().fg(Color::DarkGray)),
             Span::styled(
                 crate::config::config_path().display().to_string(),
-                Style::new().fg(Color::Cyan),
+                Style::new().fg(Color::Gray),
             ),
         ])),
         rows[4],

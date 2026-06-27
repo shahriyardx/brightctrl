@@ -18,3 +18,6 @@ brightctrl-x86_64
 
 # AUR package (separate repo)
 aur/
+
+# npm: fetched binary
+npm/bin/brightctrl

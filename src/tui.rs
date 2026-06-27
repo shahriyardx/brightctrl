@@ -522,10 +522,9 @@ fn render_title(f: &mut Frame, area: Rect, app: &App) {
 
     let pill = |label: &str, key: &str, on: bool| -> Vec<Span<'static>> {
         let bg = if on { Color::Green } else { Color::Gray };
-        let fg = if on { Color::Black } else { Color::White };
         vec![
-            Span::styled(format!(" {label}"), Style::new().bg(bg).fg(fg)),
-            Span::styled(format!(" ({key}) "), Style::new().bg(bg).fg(Color::DarkGray)),
+            Span::styled(format!(" {label}"), Style::new().bg(bg).fg(Color::Black)),
+            Span::styled(format!(" ({key}) "), Style::new().bg(bg).fg(Color::Black)),
         ]
     };
     let sync = pill("Sync", "s", app.sync_mode);

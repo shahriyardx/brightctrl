@@ -1,37 +1,20 @@
-# dependencies (bun install)
-node_modules
-aur/
-# output
-out
-dist
-*.tgz
-brightctrl
+# rust build output
+/target
+
+# release artifacts
+/brightctrl
 brightctrl-x86_64
 
-
-# code coverage
-coverage
-*.lcov
-
 # logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+*.log
 
-# dotenv environment variable files
+# env
 .env
-.env.development.local
-.env.test.local
-.env.production.local
 .env.local
 
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
-
-# IntelliJ based IDEs
+# editor / OS
 .idea
-
-# Finder (MacOS) folder config
 .DS_Store
+
+# AUR package (separate repo)
+aur/

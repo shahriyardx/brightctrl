@@ -10,8 +10,8 @@ license=("MIT")
 depends=()
 source=("brightctrl-$pkgver::$url/releases/download/v$pkgver/brightctrl"
         "LICENSE-$pkgver::$url/raw/v$pkgver/LICENSE")
-sha256sums=("SKIP"
-            "SKIP")
+sha256sums=("0869648cb6b11cf5c6af9773a24d0230b4ea4b3f9d7161afc8fe25db1066b94e"
+            "c953229204806554e12143a6e2f4236f5016baa6925579ee13d559b79aae695c")
 
 package() {
   install -Dm755 "$srcdir/brightctrl-$pkgver" "$pkgdir/usr/bin/brightctrl"

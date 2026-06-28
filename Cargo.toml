@@ -22,7 +22,13 @@ serde_json = "1"
 toml = "0.8"
 dirs = "6"
 ddc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
 ddc-i2c = { version = "0.2.2", features = ["i2c-linux"] }
+
+[target.'cfg(windows)'.dependencies]
+ddc-winapi = "0.2"
+winreg = "0.52"
 
 [profile.release]
 opt-level = "z"

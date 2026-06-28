@@ -1,6 +1,6 @@
 {
   "name": "brightctrl",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Lightweight DDC/CI external monitor brightness controller (TUI + CLI). Native Rust binary.",
   "bin": {
     "brightctrl": "bin/cli.js",
@@ -15,7 +15,8 @@
     "scripts/postinstall.js"
   ],
   "os": [
-    "linux"
+    "linux",
+    "win32"
   ],
   "cpu": [
     "x64"

@@ -21,3 +21,4 @@ aur/
 
 # npm: fetched binary
 npm/bin/brightctrl
+npm/bin/brightctrl.exe

@@ -2,12 +2,19 @@
 
 Adjust the brightness of your external monitors right from the terminal.
 
-A single static binary — no `ddcutil`, no Node.js, no runtime deps. Talks DDC/CI
-to your monitors directly over i2c.
+A single native binary — no `ddcutil`, no Node.js, no runtime deps. **Linux**
+talks DDC/CI directly over i2c; **Windows** uses the Monitor Configuration API.
 
 ![Screenshot](assets/banner.png)
 
 ## Install
+
+### npm / npx (Linux & Windows, x64)
+
+```bash
+npx brightctrl          # run without installing
+npm i -g brightctrl     # or install globally
+```
 
 ### Arch Linux (AUR)
 
@@ -18,10 +25,13 @@ yay -S brightctrl
 ### Prebuilt binary
 
 ```bash
+# Linux
 curl -L https://github.com/shahriyardx/brightctrl/releases/latest/download/brightctrl -o brightctrl
 chmod +x brightctrl
 sudo mv brightctrl /usr/local/bin/
 ```
+
+Windows: download `brightctrl.exe` from the [latest release](https://github.com/shahriyardx/brightctrl/releases/latest) and run it from a terminal.
 
 ### From source
 
@@ -29,7 +39,7 @@ sudo mv brightctrl /usr/local/bin/
 cargo install --git https://github.com/shahriyardx/brightctrl
 ```
 
-## Setup
+## Setup (Linux)
 
 DDC/CI needs the i2c kernel module and group access (one-time):
 
@@ -38,6 +48,10 @@ sudo modprobe i2c-dev
 echo i2c-dev | sudo tee /etc/modules-load.d/i2c.conf   # load on boot
 sudo usermod -aG i2c $USER                              # then log out and back in
 ```
+
+On **Windows** no setup is needed — just enable DDC/CI in your monitor's OSD menu
+if `list` comes up empty. Monitor names come from EDID; if Windows has no driver
+for a display it may fall back to a generic name.
 
 ## TUI
 

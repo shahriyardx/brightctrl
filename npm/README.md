@@ -1,8 +1,8 @@
 # brightctrl
 
-Lightweight DDC/CI external monitor brightness controller — **TUI + CLI**. Native Rust binary, no `ddcutil` dependency. Talks DDC/CI directly over `/dev/i2c-*`.
+Lightweight DDC/CI external monitor brightness controller — **TUI + CLI**. Native Rust binary, no `ddcutil` dependency.
 
-> **Linux only.** Brightness control rides on i2c (`/dev/i2c-*`), which exists only on Linux. The npm package refuses to install on other platforms.
+> **Linux + Windows (x64).** Linux drives DDC/CI over `/dev/i2c-*`; Windows uses the Monitor Configuration API. macOS isn't supported. On Windows, monitor names come from EDID and may fall back to a generic name if no driver is installed.
 
 ## Run
 
@@ -20,7 +20,7 @@ npm i -g brightctrl
 brightctrl              # also: bctrl, bc
 ```
 
-On install, a prebuilt binary is downloaded from the matching [GitHub release](https://github.com/shahriyardx/brightctrl/releases) (Linux/x64). Needs network access.
+On install, a prebuilt binary is downloaded from the matching [GitHub release](https://github.com/shahriyardx/brightctrl/releases) (Linux/x64 or Windows/x64). Needs network access.
 
 ## TUI keys
 
@@ -40,7 +40,7 @@ Mouse: drag / click / scroll the bar; click the Sync / Precise toggles.
 
 ## Permissions
 
-Reading and writing brightness needs access to `/dev/i2c-*`. Add yourself to the `i2c` group (or run as root):
+Windows needs no extra setup (enable DDC/CI in the monitor OSD if `list` is empty). On Linux, reading and writing brightness needs access to `/dev/i2c-*`. Add yourself to the `i2c` group (or run as root):
 
 ```sh
 sudo usermod -aG i2c $USER   # then re-login

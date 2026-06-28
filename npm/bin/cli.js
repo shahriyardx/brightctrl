@@ -6,12 +6,13 @@ const path = require("path");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 
-const bin = path.join(__dirname, "brightctrl");
+const exe = process.platform === "win32" ? "brightctrl.exe" : "brightctrl";
+const bin = path.join(__dirname, exe);
 
 if (!fs.existsSync(bin)) {
   console.error(
     "brightctrl: binary not found. Reinstall the package so the postinstall " +
-      "step can download it (needs network + Linux/x64)."
+      "step can download it (needs network + Linux/x64 or Windows/x64)."
   );
   process.exit(1);
 }

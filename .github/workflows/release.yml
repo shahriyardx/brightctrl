@@ -1,0 +1,39 @@
+name: release
+
+# Build native binaries on a tag push and attach them to the GitHub release.
+# Linux is built on Ubuntu (glibc) and Windows on a real windows runner (msvc,
+# links dxva2.dll for the Monitor Configuration API).
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: brightctrl
+            bin: target/release/brightctrl
+          - os: windows-latest
+            asset: brightctrl.exe
+            bin: target/release/brightctrl.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: Stage asset
+        shell: bash
+        run: cp "${{ matrix.bin }}" "${{ matrix.asset }}"
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset }}

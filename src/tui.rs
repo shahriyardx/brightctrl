@@ -171,21 +171,24 @@ impl App {
         let idle = self.last_input.elapsed() >= WRITE_DEBOUNCE;
         let throttled = self.last_flush.elapsed() >= WRITE_THROTTLE;
         if !self.dirty.is_empty() && (idle || throttled) {
-            for i in std::mem::take(&mut self.dirty) {
-                if let Some(m) = self.monitors.get_mut(i) {
-                    let _ = m.flush();
-                }
-            }
+            self.flush_all();
             self.last_flush = Instant::now();
         }
     }
 
     fn flush_all(&mut self) {
-        for i in std::mem::take(&mut self.dirty) {
+        let dirty = std::mem::take(&mut self.dirty);
+        if dirty.is_empty() {
+            return;
+        }
+        for i in dirty {
             if let Some(m) = self.monitors.get_mut(i) {
                 let _ = m.flush();
             }
         }
+        // Persist the new brightness so the next launch (which loads from cache
+        // without re-detecting) shows the current values, not stale ones.
+        crate::config::write_monitor_cache(&self.monitors);
     }
 
     fn adjust(&mut self, delta: i32) {

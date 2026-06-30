@@ -1,7 +1,7 @@
 # Maintainer: Shahriyar <shahriyardx@github.com>
 
 pkgname=brightctrl
-pkgver=0.2.2
+pkgver=0.2.3
 pkgrel=1
 pkgdesc="Lightweight DDC/CI external monitor brightness controller (TUI + CLI)"
 arch=("x86_64")

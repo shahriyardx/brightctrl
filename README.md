@@ -31,7 +31,18 @@ chmod +x brightctrl
 sudo mv brightctrl /usr/local/bin/
 ```
 
-Windows: download `brightctrl.exe` from the [latest release](https://github.com/shahriyardx/brightctrl/releases/latest) and run it from a terminal.
+### Windows
+
+```powershell
+# Scoop
+scoop bucket add brightctrl https://github.com/shahriyardx/brightctrl
+scoop install brightctrl
+
+# WinGet
+winget install shahriyardx.brightctrl
+```
+
+Or download `brightctrl.exe` from the [latest release](https://github.com/shahriyardx/brightctrl/releases/latest) and run it from a terminal.
 
 ### From source
 

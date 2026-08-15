@@ -118,6 +118,8 @@ you change brightness from the monitor's own OSD buttons. Run a plain
 On [Omarchy](https://omarchy.org/), brightctrl can also live in the status bar
 as a popup with one slider per monitor.
 
+![Omarchy bar widget](assets/omarchy-widget.png)
+
 ```bash
 brightctrl shell install
 omarchy-shell shell rescanPlugins

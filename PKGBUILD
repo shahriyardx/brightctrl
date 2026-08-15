@@ -1,7 +1,7 @@
 # Maintainer: Shahriyar <shahriyardx@github.com>
 
 pkgname=brightctrl
-pkgver=0.2.3
+pkgver=0.2.4
 pkgrel=1
 pkgdesc="Lightweight DDC/CI external monitor brightness controller (TUI + CLI)"
 arch=("x86_64")
@@ -12,7 +12,9 @@ source=("brightctrl-$pkgver::$url/releases/download/v$pkgver/brightctrl"
         "LICENSE-$pkgver::$url/raw/v$pkgver/LICENSE"
         "manifest.json-$pkgver::$url/raw/v$pkgver/shell/manifest.json"
         "Panel.qml-$pkgver::$url/raw/v$pkgver/shell/Panel.qml")
-sha256sums=("efdee5574d335c27f13ec518e864acc768adeedd98fdc150a5b9727337ebab21"
+# TODO(0.2.4 release): replace every SKIP with the real sum once the release
+# artifacts are published, the same way v0.2.3 was finalised.
+sha256sums=("SKIP"
             "c953229204806554e12143a6e2f4236f5016baa6925579ee13d559b79aae695c"
             "SKIP"
             "SKIP")

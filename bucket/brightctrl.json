@@ -1,12 +1,12 @@
 {
-    "version": "0.2.3",
+    "version": "0.2.4",
     "description": "Lightweight DDC/CI external monitor brightness controller (TUI + CLI).",
     "homepage": "https://github.com/shahriyardx/brightctrl",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/shahriyardx/brightctrl/releases/download/v0.2.3/brightctrl.exe#/brightctrl.exe",
-            "hash": "a80addd8aec584ef8012344dffe56ec0d10271d0829d39299f57c04d15c69261"
+            "url": "https://github.com/shahriyardx/brightctrl/releases/download/v0.2.4/brightctrl.exe#/brightctrl.exe",
+            "hash": "REPLACE_WITH_RELEASE_SHA256"
         }
     },
     "bin": [

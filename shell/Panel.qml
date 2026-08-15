@@ -62,8 +62,10 @@ Panel {
     return "󰃞"
   }
 
+  // Model name, never the alias: an alias is a handle for typing at the CLI,
+  // not a label for a display.
   function label(m) {
-    return (m.alias && m.alias.length > 0) ? m.alias : m.name
+    return m.name
   }
 
   // Pending value wins over the cached one so a dragged slider doesn't snap

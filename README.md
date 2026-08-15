@@ -137,35 +137,25 @@ lives in `shell/` in this repo.
 ## Waybar module
 
 Waybar can't host the popup — that widget is QML, and waybar has no plugin API
-and no slider. What it can do is a text readout you scroll on.
+and no slider. What it can do is a text readout you scroll on, and `brightctrl`
+speaks Waybar's JSON directly, so there is no wrapper script to install.
 
-Copy the script in [`contrib/waybar/`](contrib/waybar/brightness.sh):
-
-```bash
-mkdir -p ~/.config/waybar/scripts
-curl -L https://raw.githubusercontent.com/shahriyardx/brightctrl/main/contrib/waybar/brightness.sh \
-  -o ~/.config/waybar/scripts/brightness.sh
-chmod +x ~/.config/waybar/scripts/brightness.sh
-```
-
-Add the module to `~/.config/waybar/config.jsonc`:
+Add this to `~/.config/waybar/config.jsonc`:
 
 ```jsonc
 "custom/brightness": {
-  "exec": "$HOME/.config/waybar/scripts/brightness.sh",
+  "exec": "brightctrl waybar",
   "return-type": "json",
   "interval": 10,
   "tooltip": true,
-  "on-scroll-up": "$HOME/.config/waybar/scripts/brightness.sh up",
-  "on-scroll-down": "$HOME/.config/waybar/scripts/brightness.sh down",
+  "on-scroll-up": "brightctrl set all +5",
+  "on-scroll-down": "brightctrl set all -5",
   "on-click": "foot brightctrl"
 }
 ```
 
 Then put `"custom/brightness"` in one of the `modules-*` arrays.
 
-Scrolling moves every monitor together by 5%; set `BRIGHTNESS_STEP` to change
-that. The bar shows the brightest display and the tooltip lists each one by its
-alias. Clicking opens the TUI, which is where the per-monitor control lives.
-
-Needs `python3`, which the script uses to build the JSON.
+The bar shows the brightest display; the tooltip lists each one by its alias.
+Scrolling moves every monitor together, and clicking opens the TUI. Change the
+step by editing `+5` / `-5`.

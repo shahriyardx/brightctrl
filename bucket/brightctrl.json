@@ -6,7 +6,7 @@
     "architecture": {
         "64bit": {
             "url": "https://github.com/shahriyardx/brightctrl/releases/download/v0.2.5/brightctrl.exe#/brightctrl.exe",
-            "hash": "PENDING"
+            "hash": "8e7aef7565e35f5801803961ed98191038a9dc64e7fd7bd6a83b89309b8dbc14"
         }
     },
     "bin": [

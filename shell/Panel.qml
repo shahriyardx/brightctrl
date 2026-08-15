@@ -19,6 +19,12 @@ Panel {
   moduleName: "brightctrl.brightness"
   ipcTarget: "brightctrl.brightness"
 
+  // The bar sizes each widget from its root item, so without this the slot is
+  // zero-width and the icon never draws — even though the popup still opens
+  // over IPC.
+  implicitWidth: button.implicitWidth
+  implicitHeight: button.implicitHeight
+
   // Absolute path or bare name of the CLI. Override in shell.json when the
   // binary lives somewhere the shell's PATH doesn't cover.
   readonly property string binary: root.setting("binary", "brightctrl")

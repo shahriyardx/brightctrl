@@ -133,3 +133,39 @@ arrows to pick a display and adjust it.
 The Omarchy shell only discovers plugins in `~/.config/omarchy/plugins/`, which
 a package can't write to at build time — hence the install step. The QML itself
 lives in `shell/` in this repo.
+
+## Waybar module
+
+Waybar can't host the popup — that widget is QML, and waybar has no plugin API
+and no slider. What it can do is a text readout you scroll on.
+
+Copy the script in [`contrib/waybar/`](contrib/waybar/brightness.sh):
+
+```bash
+mkdir -p ~/.config/waybar/scripts
+curl -L https://raw.githubusercontent.com/shahriyardx/brightctrl/main/contrib/waybar/brightness.sh \
+  -o ~/.config/waybar/scripts/brightness.sh
+chmod +x ~/.config/waybar/scripts/brightness.sh
+```
+
+Add the module to `~/.config/waybar/config.jsonc`:
+
+```jsonc
+"custom/brightness": {
+  "exec": "$HOME/.config/waybar/scripts/brightness.sh",
+  "return-type": "json",
+  "interval": 10,
+  "tooltip": true,
+  "on-scroll-up": "$HOME/.config/waybar/scripts/brightness.sh up",
+  "on-scroll-down": "$HOME/.config/waybar/scripts/brightness.sh down",
+  "on-click": "foot brightctrl"
+}
+```
+
+Then put `"custom/brightness"` in one of the `modules-*` arrays.
+
+Scrolling moves every monitor together by 5%; set `BRIGHTNESS_STEP` to change
+that. The bar shows the brightest display and the tooltip lists each one by its
+alias. Clicking opens the TUI, which is where the per-monitor control lives.
+
+Needs `python3`, which the script uses to build the JSON.

@@ -85,6 +85,8 @@ Run `brightctrl` with no arguments.
 
 ```bash
 brightctrl list                 # detected monitors with ids, aliases, brightness
+brightctrl list --json          # same, as JSON
+brightctrl list --fast          # read the cache instead of scanning i2c
 brightctrl get <target>         # print brightness (0-100)
 brightctrl set <target> <0-100> # set brightness
 brightctrl alias <id> <name>    # name a monitor for easier targeting
@@ -94,3 +96,40 @@ brightctrl alias <id>           # remove the alias
 `<target>` is a monitor number (`1`), its id (`GSM7707`), or an alias (`left`).
 
 Config and aliases live at `~/.config/brightctrl/config.toml`.
+
+### Scanning vs the cache
+
+A full DDC/CI scan walks every i2c bus and retries each one, because a single
+read often NAKs even on a healthy monitor. That takes a few seconds — fine for
+the TUI, far too slow for anything interactive.
+
+So the detected list is cached at `~/.config/brightctrl/monitors.json`.
+`--fast` serves `list` and `get` straight from it. `set` uses it too: it
+resolves the target from the cache and confirms the monitor on that bus still
+reports the id it cached before writing, so a hotplug that renumbered the buses
+can't send the write to the wrong display. Pass `--no-cache` to force a scan.
+
+Cached brightness is the value as of the last scan or set, so it goes stale if
+you change brightness from the monitor's own OSD buttons. Run a plain
+`brightctrl list` to resync.
+
+## Omarchy bar widget
+
+On [Omarchy](https://omarchy.org/), brightctrl can also live in the status bar
+as a popup with one slider per monitor.
+
+```bash
+brightctrl shell install
+omarchy-shell shell rescanPlugins
+omarchy plugin enable brightctrl.brightness
+```
+
+The widget reads through the cache, so the popup opens instantly and dragging a
+slider writes in milliseconds. Keys: `s` sync all displays, `r` rescan, `m` off,
+arrows to pick a display and adjust it.
+
+`brightctrl shell uninstall` removes it again.
+
+The Omarchy shell only discovers plugins in `~/.config/omarchy/plugins/`, which
+a package can't write to at build time — hence the install step. The QML itself
+lives in `shell/` in this repo.

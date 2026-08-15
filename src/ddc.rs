@@ -210,6 +210,28 @@ mod platform {
             dev: Some(Box::new(LinuxBackend(dev))),
         })
     }
+
+    /// Confirm the monitor currently on `bus` is still the one with `expected`.
+    /// Reads EDID only — no brightness probe — so it costs a few ms against the
+    /// ~10s of a full [`detect`]. Guards the cached fast path against i2c bus
+    /// numbers being reshuffled by a hotplug since the cache was written.
+    pub fn bus_matches(bus: &str, expected: &str) -> bool {
+        let Ok(mut dev) = ddc_i2c::from_i2c_device(bus) else {
+            return false;
+        };
+        let mut edid = [0u8; 128];
+        for attempt in 0..PROBE_RETRIES {
+            if dev.read_edid(0, &mut edid).is_ok()
+                && edid[0..8] == [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00]
+            {
+                return super::parse_edid(&edid).1 == expected;
+            }
+            if attempt + 1 < PROBE_RETRIES {
+                std::thread::sleep(RETRY_DELAY);
+            }
+        }
+        false
+    }
 }
 
 // ──────────────────────────── Windows backend ────────────────────────────
@@ -333,11 +355,31 @@ mod platform {
         }
         Ok(monitors)
     }
+
+    /// Windows identifies a monitor by its enumeration index, which is also
+    /// what `open` takes, so there is nothing cheaper to check than a full
+    /// re-enumeration. Accept the cached entry and let `open` fail if stale.
+    pub fn bus_matches(_bus: &str, _expected: &str) -> bool {
+        true
+    }
 }
 
 /// Re-open a monitor handle from its stored `bus` identifier.
 fn open(bus: &str) -> Result<Box<dyn Backend>> {
     platform::open(bus)
+}
+
+/// Confirm the monitor on `bus` still has the id `expected`. See the platform
+/// implementations for what this costs and what it can actually prove.
+pub fn bus_matches(bus: &str, expected: &str) -> bool {
+    platform::bus_matches(bus, expected)
+}
+
+/// Monitors from the on-disk cache, or `None` when there is no usable cache.
+/// Skips the i2c scan entirely: handles are opened lazily on first write, and
+/// `brightness` is the value as of the last detect or set.
+pub fn cached() -> Option<Vec<Monitor>> {
+    crate::config::read_monitor_cache().filter(|m| !m.is_empty())
 }
 
 /// Detect every controllable DDC/CI monitor on this platform.

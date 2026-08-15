@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 PackageIdentifier: shahriyardx.brightctrl
-PackageVersion: 0.2.3
+PackageVersion: 0.2.4
 PackageLocale: en-US
 Publisher: shahriyardx
 PublisherUrl: https://github.com/shahriyardx

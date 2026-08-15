@@ -1,6 +1,7 @@
 mod cli;
 mod config;
 mod ddc;
+mod shell_plugin;
 mod tui;
 
 use clap::Parser;

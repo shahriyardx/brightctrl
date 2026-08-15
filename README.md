@@ -152,12 +152,16 @@ Add this to `~/.config/waybar/config.jsonc`:
   "tooltip": true,
   "on-scroll-up": "brightctrl set all +5",
   "on-scroll-down": "brightctrl set all -5",
-  "on-click": "foot brightctrl"
+  "on-click": "xdg-terminal-exec brightctrl"
 }
 ```
 
 Then put `"custom/brightness"` in one of the `modules-*` arrays.
 
-The bar shows the brightest display; the tooltip lists each one by its alias.
+The bar shows the brightest display; the tooltip lists each one by its name.
 Scrolling moves every monitor together, and clicking opens the TUI. Change the
 step by editing `+5` / `-5`.
+
+`xdg-terminal-exec` launches your configured default terminal. Swap it for
+whatever you use — `foot brightctrl`, `alacritty -e brightctrl`,
+`kitty brightctrl` — if you don't have it.
